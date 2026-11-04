@@ -1,0 +1,7 @@
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.Exceções;
+
+public class ClienteJaCadastradoException extends RuntimeException {
+    public ClienteJaCadastradoException(String message) {
+        super(message);
+    }
+}
