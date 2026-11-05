@@ -1,4 +1,10 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in;
 
-public class AutenticacaoServicePort {
+
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.web.DTO.Usuario.AutenticacaoRequestDTO;
+
+public interface AutenticaçãoServicePort {
+
+    public AutenticacaoRequestDTO autenticar(String email, String senha);
+
 }
