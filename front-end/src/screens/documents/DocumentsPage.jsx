@@ -18,7 +18,7 @@ import {
   DirecaoDocumento,
   documentStatusMeta,
   ultimaAtividade,
-} from '../../core/domain/documento';
+} from '../../core/domain/document';
 import { diasDesde, paraData } from '../../core/domain/data';
 
 const PAGE_SIZE = 10;
@@ -352,7 +352,7 @@ const DocumentsPage = () => {
             onClick={() => setAttachOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors"
           >
-            <Plus size={16} /> Anexar documento
+            <Plus size={16} /> Anexar document
           </button>
         </div>
       </div>
@@ -385,8 +385,8 @@ const DocumentsPage = () => {
 
       {listaVazia ? (
         <EmptyState
-          title="Nenhum documento encontrado com esses filtros"
-          subtitle="Ajuste a busca, o cliente, o tipo ou o status para encontrar o documento desejado."
+          title="Nenhum document encontrado com esses filtros"
+          subtitle="Ajuste a busca, o cliente, o tipo ou o status para encontrar o document desejado."
         />
       ) : (
         <div className="space-y-4">
@@ -408,7 +408,7 @@ const DocumentsPage = () => {
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
             <p>
               Mostrando {(paginaAtual - 1) * PAGE_SIZE + 1}–
-              {Math.min(paginaAtual * PAGE_SIZE, listaExibida.length)} de {listaExibida.length} documento
+              {Math.min(paginaAtual * PAGE_SIZE, listaExibida.length)} de {listaExibida.length} document
               {listaExibida.length > 1 ? 's' : ''}
             </p>
             <div className="flex items-center gap-2">

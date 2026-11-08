@@ -179,13 +179,13 @@ const ClientDetailPage = () => {
             <DocumentTable documents={filteredDocs} onView={openViewer} onSend={handleSend} />
           ) : hasAnyDoc ? (
             <EmptyState
-              title="Nenhum documento encontrado"
-              subtitle="Ajuste os filtros para encontrar o documento desejado."
+              title="Nenhum document encontrado"
+              subtitle="Ajuste os filtros para encontrar o document desejado."
             />
           ) : (
             <EmptyState
-              title="Nenhum documento anexado para este cliente"
-              subtitle="Clique em “+ Anexar documento” para enviar o primeiro arquivo."
+              title="Nenhum document anexado para este cliente"
+              subtitle="Clique em “+ Anexar document” para enviar o primeiro arquivo."
             />
           )}
         </div>

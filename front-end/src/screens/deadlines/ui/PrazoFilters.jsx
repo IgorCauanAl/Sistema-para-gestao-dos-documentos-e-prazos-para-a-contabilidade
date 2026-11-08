@@ -8,7 +8,7 @@ import {
   statusPrazoMeta,
   PRIORIDADE_OPCOES,
   prioridadeMeta,
-} from '../../../core/domain/prazo';
+} from '../../../core/domain/deadline';
 
 const selectClass =
   'px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all min-w-[150px]';
@@ -16,13 +16,13 @@ const selectClass =
 const PrazoFilters = ({ filters, onChange, clientes, opcoesObrigacao, onClear }) => (
   <div className="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-4 flex flex-wrap items-end gap-4">
     <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
-      <label htmlFor="filtro-busca-prazo" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label htmlFor="filtro-busca-deadline" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
         Busca
       </label>
       <div className="relative">
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
-          id="filtro-busca-prazo"
+          id="filtro-busca-deadline"
           type="text"
           placeholder="Ex.: FGTS, eSocial, DAS"
           className="w-full px-3 py-2.5 pl-9 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
@@ -34,7 +34,7 @@ const PrazoFilters = ({ filters, onChange, clientes, opcoesObrigacao, onClear })
 
     <div className="flex flex-col gap-1.5">
       <ClientSelect
-        id="filtro-cliente-prazo"
+        id="filtro-cliente-deadline"
         label="Cliente"
         clientes={clientes}
         value={filters.clienteId}
@@ -44,11 +44,11 @@ const PrazoFilters = ({ filters, onChange, clientes, opcoesObrigacao, onClear })
     </div>
 
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="filtro-obrigacao-prazo" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label htmlFor="filtro-obrigacao-deadline" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
         Obrigação
       </label>
       <select
-        id="filtro-obrigacao-prazo"
+        id="filtro-obrigacao-deadline"
         className={selectClass}
         value={filters.obrigacao}
         onChange={(e) => onChange({ ...filters, obrigacao: e.target.value })}
@@ -63,11 +63,11 @@ const PrazoFilters = ({ filters, onChange, clientes, opcoesObrigacao, onClear })
     </div>
 
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="filtro-categoria-prazo" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label htmlFor="filtro-categoria-deadline" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
         Categoria
       </label>
       <select
-        id="filtro-categoria-prazo"
+        id="filtro-categoria-deadline"
         className={selectClass}
         value={filters.categoria}
         onChange={(e) => onChange({ ...filters, categoria: e.target.value })}
@@ -82,11 +82,11 @@ const PrazoFilters = ({ filters, onChange, clientes, opcoesObrigacao, onClear })
     </div>
 
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="filtro-competencia-prazo" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label htmlFor="filtro-competencia-deadline" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
         Competência
       </label>
       <select
-        id="filtro-competencia-prazo"
+        id="filtro-competencia-deadline"
         className={selectClass}
         value={filters.competencia}
         onChange={(e) => onChange({ ...filters, competencia: e.target.value })}
@@ -106,11 +106,11 @@ const PrazoFilters = ({ filters, onChange, clientes, opcoesObrigacao, onClear })
     </div>
 
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="filtro-status-prazo" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label htmlFor="filtro-status-deadline" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
         Status
       </label>
       <select
-        id="filtro-status-prazo"
+        id="filtro-status-deadline"
         className={selectClass}
         value={filters.status}
         onChange={(e) => onChange({ ...filters, status: e.target.value })}
@@ -125,11 +125,11 @@ const PrazoFilters = ({ filters, onChange, clientes, opcoesObrigacao, onClear })
     </div>
 
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="filtro-prioridade-prazo" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <label htmlFor="filtro-prioridade-deadline" className="text-xs font-semibold uppercase tracking-wider text-slate-500">
         Prioridade
       </label>
       <select
-        id="filtro-prioridade-prazo"
+        id="filtro-prioridade-deadline"
         className={selectClass}
         value={filters.prioridade}
         onChange={(e) => onChange({ ...filters, prioridade: e.target.value })}

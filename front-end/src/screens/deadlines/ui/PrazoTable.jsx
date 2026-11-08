@@ -9,7 +9,7 @@ import {
   textoRelativoVencimento,
   prioridadeEfetiva,
   etapaAtualLabel,
-} from '../../../core/domain/prazo';
+} from '../../../core/domain/deadline';
 
 const PrazoTable = ({ prazos, nomeCliente, hoje, onView, onEntregar }) => (
   <Table>
@@ -28,15 +28,15 @@ const PrazoTable = ({ prazos, nomeCliente, hoje, onView, onEntregar }) => (
         </tr>
       </thead>
       <tbody>
-        {prazos.map((prazo) => {
-          const atrasado = estaAtrasado(prazo, hoje);
-          const dias = diasRestantes(prazo, hoje);
-          const venceHoje = dias === 0 && prazo.status !== StatusPrazo.ENTREGUE;
-          const relativo = textoRelativoVencimento(prazo, hoje);
+        {prazos.map((deadline) => {
+          const atrasado = estaAtrasado(deadline, hoje);
+          const dias = diasRestantes(deadline, hoje);
+          const venceHoje = dias === 0 && deadline.status !== StatusPrazo.ENTREGUE;
+          const relativo = textoRelativoVencimento(deadline, hoje);
 
           return (
             <tr
-              key={prazo.id}
+              key={deadline.id}
               className={`border-b border-slate-100 last:border-0 transition-colors ${
                 atrasado
                   ? 'bg-red-50/70 hover:bg-red-100/60'
@@ -46,15 +46,15 @@ const PrazoTable = ({ prazos, nomeCliente, hoje, onView, onEntregar }) => (
               }`}
             >
               <td className="p-4 pl-6 text-sm font-medium text-slate-700 whitespace-nowrap">
-                {nomeCliente(prazo.clienteId)}
+                {nomeCliente(deadline.clienteId)}
               </td>
-              <td className="p-4 text-sm font-medium text-slate-700">{prazo.obrigacao}</td>
-              <td className="p-4 text-sm text-slate-600">{prazo.categoria}</td>
-              <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{prazo.competencia}</td>
+              <td className="p-4 text-sm font-medium text-slate-700">{deadline.obrigacao}</td>
+              <td className="p-4 text-sm text-slate-600">{deadline.categoria}</td>
+              <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{deadline.competencia}</td>
               <td className="p-4 text-sm whitespace-nowrap">
                 <div className="flex flex-col">
                   <span className={atrasado ? 'font-semibold text-red-600' : 'text-slate-600'}>
-                    {prazo.vencimentoAtual}
+                    {deadline.vencimentoAtual}
                   </span>
                   {relativo && (
                     <span className={`text-xs ${atrasado ? 'text-red-500' : 'text-slate-400'}`}>{relativo}</span>
@@ -62,12 +62,12 @@ const PrazoTable = ({ prazos, nomeCliente, hoje, onView, onEntregar }) => (
                 </div>
               </td>
               <td className="p-4">
-                <PrioridadeBadge prioridade={prioridadeEfetiva(prazo, hoje)} />
+                <PrioridadeBadge prioridade={prioridadeEfetiva(deadline, hoje)} />
               </td>
-              <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{etapaAtualLabel(prazo)}</td>
+              <td className="p-4 text-sm text-slate-600 whitespace-nowrap">{etapaAtualLabel(deadline)}</td>
               <td className="p-4">
                 <div className="flex items-center gap-2">
-                  <PrazoStatusBadge status={prazo.status} />
+                  <PrazoStatusBadge status={deadline.status} />
                   {atrasado && <AtrasoBadge />}
                 </div>
               </td>
@@ -75,20 +75,20 @@ const PrazoTable = ({ prazos, nomeCliente, hoje, onView, onEntregar }) => (
                 <div className="flex justify-center items-center gap-2">
                   <button
                     type="button"
-                    title="Ver detalhes do prazo"
-                    aria-label={`Ver prazo ${prazo.obrigacao} de ${nomeCliente(prazo.clienteId)}`}
-                    onClick={() => onView(prazo)}
+                    title="Ver detalhes do deadline"
+                    aria-label={`Ver deadline ${deadline.obrigacao} de ${nomeCliente(deadline.clienteId)}`}
+                    onClick={() => onView(deadline)}
                     className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"
                   >
                     <Eye size={16} />
                   </button>
 
-                  {prazo.status !== StatusPrazo.ENTREGUE && (
+                  {deadline.status !== StatusPrazo.ENTREGUE && (
                     <button
                       type="button"
                       title="Marcar como entregue"
-                      aria-label={`Marcar ${prazo.obrigacao} de ${nomeCliente(prazo.clienteId)} como entregue`}
-                      onClick={() => onEntregar(prazo)}
+                      aria-label={`Marcar ${deadline.obrigacao} de ${nomeCliente(deadline.clienteId)} como entregue`}
+                      onClick={() => onEntregar(deadline)}
                       className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                     >
                       <CheckCircle2 size={16} />

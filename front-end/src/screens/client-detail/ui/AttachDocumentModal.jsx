@@ -12,7 +12,7 @@ import {
   TIPOS_DOCUMENTO,
   ANTECEDENCIA_PADRAO,
   extensaoDe,
-} from '../../../core/domain/documento';
+} from '../../../core/domain/document';
 import { paraBR } from '../../../core/domain/data';
 
 const inputClass =
@@ -86,7 +86,7 @@ const AttachDocumentModal = ({ open, onClose, client, clientes, prefill, onSubmi
     e.preventDefault();
 
     if (comSelecaoDeCliente && !clienteAtual) {
-      setError('Selecione o cliente para anexar o documento.');
+      setError('Selecione o cliente para anexar o document.');
       return;
     }
 
@@ -116,7 +116,7 @@ const AttachDocumentModal = ({ open, onClose, client, clientes, prefill, onSubmi
     <Modal
       open={open}
       onClose={onClose}
-      title="Anexar documento"
+      title="Anexar document"
       footer={
         <div className="px-6 py-4 flex justify-end gap-3">
           <button
@@ -221,11 +221,11 @@ const AttachDocumentModal = ({ open, onClose, client, clientes, prefill, onSubmi
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label htmlFor="tipo-documento" className="block text-sm font-semibold mb-1.5 text-slate-700">
-              Tipo do documento
+            <label htmlFor="tipo-document" className="block text-sm font-semibold mb-1.5 text-slate-700">
+              Tipo do document
             </label>
             <select
-              id="tipo-documento"
+              id="tipo-document"
               required
               className={inputClass}
               value={tipo}
@@ -302,7 +302,7 @@ const AttachDocumentModal = ({ open, onClose, client, clientes, prefill, onSubmi
           <div className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-2xl">
             <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
             <p className="text-sm font-medium text-amber-800">
-              Já existe este documento nesta competência. Será criada a versão v{nextVersion} e a anterior ficará no
+              Já existe este document nesta competência. Será criada a versão v{nextVersion} e a anterior ficará no
               histórico de versões.
             </p>
           </div>

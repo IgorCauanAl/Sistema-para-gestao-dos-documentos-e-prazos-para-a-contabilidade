@@ -3,7 +3,7 @@ import { Eye, Send, RotateCcw, FileSearch, AlertTriangle, ArrowUp, ArrowDown, Ch
 import Table from '../../../core/components/ui/Table';
 import StatusBadge from '../../../core/components/ui/StatusBadge';
 import FileIcon from '../../../core/components/ui/FileIcon';
-import { DocumentStatus, LIMITE_DIAS_SEM_ABERTURA, emRiscoSemAbertura, ultimaAtividade, statusPrazoDocumento, prazoDocumentoMeta } from '../../../core/domain/documento';
+import { DocumentStatus, LIMITE_DIAS_SEM_ABERTURA, emRiscoSemAbertura, ultimaAtividade, statusPrazoDocumento, prazoDocumentoMeta } from '../../../core/domain/document';
 
 const contextualAction = (doc) => {
   switch (doc.status) {
@@ -147,7 +147,7 @@ const DocumentsTable = ({
                 <div className="flex justify-center items-center gap-2">
                   <button
                     type="button"
-                    title="Visualizar documento"
+                    title="Visualizar document"
                     aria-label={`Visualizar ${doc.nome}`}
                     onClick={() => onView(doc)}
                     className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"

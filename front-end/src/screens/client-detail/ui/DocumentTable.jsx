@@ -3,7 +3,7 @@ import { Eye, Send, RotateCcw, FileSearch } from 'lucide-react';
 import Table from '../../../core/components/ui/Table';
 import StatusBadge from '../../../core/components/ui/StatusBadge';
 import FileIcon from '../../../core/components/ui/FileIcon';
-import { DocumentStatus, statusPrazoDocumento, prazoDocumentoMeta } from '../../../core/domain/documento';
+import { DocumentStatus, statusPrazoDocumento, prazoDocumentoMeta } from '../../../core/domain/document';
 
 const rowAction = (status) => {
   switch (status) {
@@ -70,7 +70,7 @@ const DocumentTable = ({ documents, onView, onSend }) => (
                 <div className="flex justify-center items-center gap-2">
                   <button
                     type="button"
-                    title="Visualizar documento"
+                    title="Visualizar document"
                     aria-label={`Visualizar ${doc.nome}`}
                     onClick={() => onView(doc)}
                     className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 rounded-lg transition-colors"

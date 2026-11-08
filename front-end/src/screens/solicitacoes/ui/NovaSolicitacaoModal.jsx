@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, FileText } from 'lucide-react';
 import Modal from '../../../core/components/ui/Modal';
 import { CANAIS_ENVIO, MESES, ANOS } from '../../../core/domain/documento';
-import { FORMATOS_ESPERADOS, SUGESTOES_ITENS } from '../../../core/domain/solicitacao';
+import { FORMATOS_ESPERADOS, SUGESTOES_ITENS } from '../../../core/domain/request';
 import { paraBR } from '../../../core/domain/data';
 
 const inputClass =
@@ -12,7 +12,7 @@ const NovaSolicitacaoModal = ({ open, onClose, clientes, clienteInicial, onSubmi
   const [clienteNome, setClienteNome] = useState('');
   const [titulo, setTitulo] = useState('');
   const [competencia, setCompetencia] = useState('09/2026');
-  const [prazo, setPrazo] = useState('');
+  const [deadline, setPrazo] = useState('');
   const [itens, setItens] = useState([{ nome: '', formato: 'PDF' }]);
   const [instrucoes, setInstrucoes] = useState('');
   const [validadeDias, setValidadeDias] = useState('7');
@@ -61,8 +61,8 @@ const NovaSolicitacaoModal = ({ open, onClose, clientes, clienteInicial, onSubmi
       setError('Adicione pelo menos 1 item à solicitação.');
       return;
     }
-    if (!prazo) {
-      setError('Informe o prazo para envio.');
+    if (!deadline) {
+      setError('Informe o deadline para envio.');
       return;
     }
 
@@ -71,7 +71,7 @@ const NovaSolicitacaoModal = ({ open, onClose, clientes, clienteInicial, onSubmi
       clienteId: cliente.id,
       titulo: titulo.trim(),
       competencia,
-      prazo: paraBR(prazo),
+      deadline: paraBR(deadline),
       instrucoes: instrucoes.trim(),
       canal,
       validadeDias: Number(validadeDias),
@@ -165,10 +165,10 @@ const NovaSolicitacaoModal = ({ open, onClose, clientes, clienteInicial, onSubmi
           </div>
 
           <div>
-            <label htmlFor="sol-prazo" className="block text-sm font-semibold mb-1.5 text-slate-700">
+            <label htmlFor="sol-deadline" className="block text-sm font-semibold mb-1.5 text-slate-700">
               Prazo para envio
             </label>
-            <input id="sol-prazo" type="date" className={inputClass} value={prazo} onChange={(e) => setPrazo(e.target.value)} />
+            <input id="sol-deadline" type="date" className={inputClass} value={deadline} onChange={(e) => setPrazo(e.target.value)} />
           </div>
         </div>
 
@@ -283,7 +283,7 @@ const NovaSolicitacaoModal = ({ open, onClose, clientes, clienteInicial, onSubmi
                 >
                   <input
                     type="radio"
-                    name="canal-solicitacao"
+                    name="canal-request"
                     value={opcao}
                     checked={canal === opcao}
                     onChange={(e) => setCanal(e.target.value)}

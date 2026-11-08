@@ -50,7 +50,7 @@ const RejectItemModal = ({ open, onClose, solicitacao, cliente, item, onConfirm 
     <Modal
       open={open}
       onClose={onClose}
-      title="Recusar documento"
+      title="Recusar document"
       footer={
         <div className="px-6 py-4 flex justify-end gap-3">
           <button

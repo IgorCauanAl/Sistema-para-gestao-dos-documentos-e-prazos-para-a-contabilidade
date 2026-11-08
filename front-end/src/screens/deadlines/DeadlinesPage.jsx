@@ -21,7 +21,7 @@ import {
   estaAtrasado,
   diasRestantes,
   prioridadeEfetiva,
-} from '../../core/domain/prazo';
+} from '../../core/domain/deadline';
 
 const PAGE_SIZE = 10;
 
@@ -52,7 +52,7 @@ const DeadlinesPage = () => {
   const [anexarOpen, setAnexarOpen] = useState(false);
   const [entregarSolicitado, setEntregarSolicitado] = useState(null);
 
-  const detailId = Number(searchParams.get('prazo')) || null;
+  const detailId = Number(searchParams.get('deadline')) || null;
 
   const refresh = useCallback(async () => {
     const [listaClientes, listaPrazos] = await Promise.all([
@@ -77,45 +77,45 @@ const DeadlinesPage = () => {
   );
 
   const opcoesObrigacao = useMemo(
-    () => [...new Set((prazos ?? []).map((prazo) => prazo.obrigacao))].sort(),
+    () => [...new Set((prazos ?? []).map((deadline) => deadline.obrigacao))].sort(),
     [prazos]
   );
 
   const contagens = useMemo(() => {
     const lista = prazos ?? [];
-    const abertos = lista.filter((prazo) => prazo.status !== StatusPrazo.ENTREGUE);
+    const abertos = lista.filter((deadline) => deadline.status !== StatusPrazo.ENTREGUE);
     return {
-      ATRASADOS: lista.filter((prazo) => estaAtrasado(prazo, HOJE)).length,
-      HOJE: abertos.filter((prazo) => diasRestantes(prazo, HOJE) === 0).length,
-      SEMANA: abertos.filter((prazo) => {
-        const dias = diasRestantes(prazo, HOJE);
+      ATRASADOS: lista.filter((deadline) => estaAtrasado(deadline, HOJE)).length,
+      HOJE: abertos.filter((deadline) => diasRestantes(deadline, HOJE) === 0).length,
+      SEMANA: abertos.filter((deadline) => {
+        const dias = diasRestantes(deadline, HOJE);
         return dias !== null && dias >= 0 && dias <= 7;
       }).length,
-      PENDENTES: lista.filter((prazo) => prazo.status === StatusPrazo.PENDENTE).length,
+      PENDENTES: lista.filter((deadline) => deadline.status === StatusPrazo.PENDENTE).length,
     };
   }, [prazos]);
 
   const listaExibida = useMemo(() => {
     const termo = filters.busca.trim().toLowerCase();
 
-    const filtrados = (prazos ?? []).filter((prazo) => {
+    const filtrados = (prazos ?? []).filter((deadline) => {
       if (termo) {
-        const alvo = `${prazo.obrigacao} ${prazo.categoria} ${prazo.competencia} ${nomeCliente(prazo.clienteId)}`.toLowerCase();
+        const alvo = `${deadline.obrigacao} ${deadline.categoria} ${deadline.competencia} ${nomeCliente(deadline.clienteId)}`.toLowerCase();
         if (!alvo.includes(termo)) return false;
       }
-      if (filters.clienteId && prazo.clienteId !== filters.clienteId) return false;
-      if (filters.obrigacao && prazo.obrigacao !== filters.obrigacao) return false;
-      if (filters.categoria && prazo.categoria !== filters.categoria) return false;
-      if (filters.competencia && prazo.competencia !== filters.competencia) return false;
-      if (filters.status && prazo.status !== filters.status) return false;
-      if (filters.prioridade && prioridadeEfetiva(prazo, HOJE) !== filters.prioridade) return false;
+      if (filters.clienteId && deadline.clienteId !== filters.clienteId) return false;
+      if (filters.obrigacao && deadline.obrigacao !== filters.obrigacao) return false;
+      if (filters.categoria && deadline.categoria !== filters.categoria) return false;
+      if (filters.competencia && deadline.competencia !== filters.competencia) return false;
+      if (filters.status && deadline.status !== filters.status) return false;
+      if (filters.prioridade && prioridadeEfetiva(deadline, HOJE) !== filters.prioridade) return false;
 
-      if (cardAtivo === 'ATRASADOS' && !estaAtrasado(prazo, HOJE)) return false;
-      if (cardAtivo === 'PENDENTES' && prazo.status !== StatusPrazo.PENDENTE) return false;
-      if (cardAtivo === 'HOJE' && !(diasRestantes(prazo, HOJE) === 0 && prazo.status !== StatusPrazo.ENTREGUE)) return false;
+      if (cardAtivo === 'ATRASADOS' && !estaAtrasado(deadline, HOJE)) return false;
+      if (cardAtivo === 'PENDENTES' && deadline.status !== StatusPrazo.PENDENTE) return false;
+      if (cardAtivo === 'HOJE' && !(diasRestantes(deadline, HOJE) === 0 && deadline.status !== StatusPrazo.ENTREGUE)) return false;
       if (cardAtivo === 'SEMANA') {
-        const dias = diasRestantes(prazo, HOJE);
-        if (!(dias !== null && dias >= 0 && dias <= 7 && prazo.status !== StatusPrazo.ENTREGUE)) return false;
+        const dias = diasRestantes(deadline, HOJE);
+        if (!(dias !== null && dias >= 0 && dias <= 7 && deadline.status !== StatusPrazo.ENTREGUE)) return false;
       }
 
       return true;
@@ -139,14 +139,14 @@ const DeadlinesPage = () => {
   const paginada = listaExibida.slice((paginaAtual - 1) * PAGE_SIZE, paginaAtual * PAGE_SIZE);
 
   const prazoDetalhe = useMemo(
-    () => (prazos ?? []).find((prazo) => prazo.id === detailId) ?? null,
+    () => (prazos ?? []).find((deadline) => deadline.id === detailId) ?? null,
     [prazos, detailId]
   );
   const clienteDetalhe = prazoDetalhe
     ? clientes.find((cliente) => cliente.id === prazoDetalhe.clienteId) ?? null
     : null;
 
-  const abrirDetalhe = (prazo) => setSearchParams({ prazo: String(prazo.id) });
+  const abrirDetalhe = (deadline) => setSearchParams({ deadline: String(deadline.id) });
   const fecharDetalhe = () => setSearchParams({});
 
   const handleToggleEtapa = async (index) => {
@@ -193,7 +193,7 @@ const DeadlinesPage = () => {
     setNovaSolOpen(false);
     await refresh();
     notifyUpdate();
-    showToast(`Solicitação criada e vinculada ao prazo de ${prazoDetalhe.obrigacao}.`);
+    showToast(`Solicitação criada e vinculada ao deadline de ${prazoDetalhe.obrigacao}.`);
   };
 
   const handleAnexarGuia = async (payload) => {
@@ -227,8 +227,8 @@ const DeadlinesPage = () => {
 
       {listaVazia ? (
         <EmptyState
-          title="Nenhum prazo encontrado com esses filtros"
-          subtitle="Ajuste a busca, o cliente, a categoria ou o status para encontrar o prazo desejado."
+          title="Nenhum deadline encontrado com esses filtros"
+          subtitle="Ajuste a busca, o cliente, a categoria ou o status para encontrar o deadline desejado."
         />
       ) : (
         <div className="space-y-4">
@@ -243,7 +243,7 @@ const DeadlinesPage = () => {
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
             <p>
               Mostrando {(paginaAtual - 1) * PAGE_SIZE + 1}–
-              {Math.min(paginaAtual * PAGE_SIZE, listaExibida.length)} de {listaExibida.length} prazo
+              {Math.min(paginaAtual * PAGE_SIZE, listaExibida.length)} de {listaExibida.length} deadline
               {listaExibida.length > 1 ? 's' : ''}
             </p>
             <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ const DeadlinesPage = () => {
 
       <PrazoDetailPanel
         open={Boolean(prazoDetalhe)}
-        prazo={prazoDetalhe}
+        deadline={prazoDetalhe}
         cliente={clienteDetalhe}
         hoje={HOJE}
         onClose={fecharDetalhe}
@@ -287,7 +287,7 @@ const DeadlinesPage = () => {
       <ReprogramarModal
         open={reprogramarOpen}
         onClose={() => setReprogramarOpen(false)}
-        prazo={prazoDetalhe}
+        deadline={prazoDetalhe}
         onConfirm={handleReprogramarConfirm}
       />
 
@@ -311,7 +311,7 @@ const DeadlinesPage = () => {
         open={Boolean(entregarSolicitado)}
         onClose={() => setEntregarSolicitado(null)}
         onConfirm={handleMarcarEntregue}
-        title="Marcar prazo como entregue"
+        title="Marcar deadline como entregue"
         message={
           entregarSolicitado
             ? `Confirmar a entrega de ${entregarSolicitado.obrigacao} (${entregarSolicitado.competencia}) de ${nomeCliente(entregarSolicitado.clienteId)}?`

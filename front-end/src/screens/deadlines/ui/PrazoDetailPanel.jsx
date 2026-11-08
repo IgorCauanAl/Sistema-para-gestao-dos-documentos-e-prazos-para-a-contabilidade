@@ -20,11 +20,11 @@ import {
   textoRelativoVencimento,
   vencimentoFoiAjustado,
   etapaAtualLabel,
-} from '../../../core/domain/prazo';
+} from '../../../core/domain/deadline';
 
 const PrazoDetailPanel = ({
   open,
-  prazo,
+  deadline,
   cliente,
   hoje,
   onClose,
@@ -35,18 +35,18 @@ const PrazoDetailPanel = ({
   onCriarSolicitacao,
   onAnexarGuia,
 }) => {
-  if (!open || !prazo) return null;
+  if (!open || !deadline) return null;
 
-  const atrasado = estaAtrasado(prazo, hoje);
-  const entregue = prazo.status === StatusPrazo.ENTREGUE;
-  const relativo = textoRelativoVencimento(prazo, hoje);
-  const prioridadeAtual = prioridadeEfetiva(prazo, hoje);
-  const ajustado = vencimentoFoiAjustado(prazo);
+  const atrasado = estaAtrasado(deadline, hoje);
+  const entregue = deadline.status === StatusPrazo.ENTREGUE;
+  const relativo = textoRelativoVencimento(deadline, hoje);
+  const prioridadeAtual = prioridadeEfetiva(deadline, hoje);
+  const ajustado = vencimentoFoiAjustado(deadline);
 
   const acoes = [
     {
       id: 'criar-solicitacao',
-      label: prazo.solicitacaoId ? `Solicitação vinculada (#${prazo.solicitacaoId})` : 'Criar solicitação ao cliente',
+      label: deadline.solicitacaoId ? `Solicitação vinculada (#${deadline.solicitacaoId})` : 'Criar solicitação ao cliente',
       icon: Send,
       onClick: onCriarSolicitacao,
       className: 'border-slate-200 text-slate-700 hover:bg-slate-50',
@@ -78,24 +78,24 @@ const PrazoDetailPanel = ({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={`Detalhes do prazo ${prazo.obrigacao}`}
+        aria-label={`Detalhes do deadline ${deadline.obrigacao}`}
         className="bg-white w-full max-w-xl h-full overflow-y-auto shadow-xl animate-in slide-in-from-right duration-200"
       >
         <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-5 flex items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-800">{prazo.obrigacao}</h2>
-              <PrazoStatusBadge status={prazo.status} />
+              <h2 className="text-xl font-bold text-slate-800">{deadline.obrigacao}</h2>
+              <PrazoStatusBadge status={deadline.status} />
               {atrasado && <AtrasoBadge />}
             </div>
             <p className="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
-              <Building2 size={14} /> {cliente?.razaoSocial ?? '—'} · competência {prazo.competencia}
+              <Building2 size={14} /> {cliente?.razaoSocial ?? '—'} · competência {deadline.competencia}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar detalhes do prazo"
+            aria-label="Fechar detalhes do deadline"
             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors shrink-0"
           >
             <X size={20} />
@@ -109,7 +109,7 @@ const PrazoDetailPanel = ({
             </p>
             <div className="flex items-end justify-between gap-3 flex-wrap">
               <p className={`text-2xl font-bold ${atrasado ? 'text-red-600' : 'text-slate-800'}`}>
-                {prazo.vencimentoAtual}
+                {deadline.vencimentoAtual}
               </p>
               {relativo && (
                 <span className={`text-sm font-medium ${atrasado ? 'text-red-500' : 'text-slate-500'}`}>
@@ -117,8 +117,8 @@ const PrazoDetailPanel = ({
                 </span>
               )}
             </div>
-            {prazo.vencimentoOriginal !== prazo.vencimentoAtual && (
-              <p className="text-xs text-slate-400 mt-2">Vencimento original: {prazo.vencimentoOriginal}</p>
+            {deadline.vencimentoOriginal !== deadline.vencimentoAtual && (
+              <p className="text-xs text-slate-400 mt-2">Vencimento original: {deadline.vencimentoOriginal}</p>
             )}
             {ajustado && (
               <p className="text-xs text-amber-700 mt-1">
@@ -130,18 +130,18 @@ const PrazoDetailPanel = ({
           <section className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Etapa atual</p>
-              <p className="font-medium text-slate-700">{etapaAtualLabel(prazo)}</p>
+              <p className="font-medium text-slate-700">{etapaAtualLabel(deadline)}</p>
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Categoria</p>
-              <p className="font-medium text-slate-700">{prazo.categoria}</p>
+              <p className="font-medium text-slate-700">{deadline.categoria}</p>
             </div>
           </section>
 
           <section>
             <div className="flex items-center justify-between gap-3 mb-2">
               <p className="text-sm font-semibold text-slate-700">Prioridade</p>
-              {prazo.prioridadeManual && (
+              {deadline.prioridadeManual && (
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-500">
                   Definida manualmente
                 </span>
@@ -150,8 +150,8 @@ const PrazoDetailPanel = ({
             <div className="flex items-center gap-3">
               <PrioridadeBadge prioridade={prioridadeAtual} />
               <select
-                id="prazo-prioridade"
-                aria-label="Definir prioridade do prazo"
+                id="deadline-prioridade"
+                aria-label="Definir prioridade do deadline"
                 className="px-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                 value={prioridadeAtual}
                 onChange={(e) => onDefinirPrioridade(e.target.value)}
@@ -167,7 +167,7 @@ const PrazoDetailPanel = ({
 
           <section>
             <p className="text-sm font-semibold text-slate-700 mb-3">Etapas da obrigação</p>
-            <EtapasChecklist prazo={prazo} onToggle={onToggleEtapa} />
+            <EtapasChecklist deadline={deadline} onToggle={onToggleEtapa} />
           </section>
 
           <section className="space-y-2">
@@ -200,11 +200,11 @@ const PrazoDetailPanel = ({
             <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
               <History size={16} className="text-slate-400" /> Histórico
             </p>
-            {prazo.historico.length === 0 ? (
+            {deadline.historico.length === 0 ? (
               <p className="text-sm text-slate-400 italic">Nenhum evento registrado.</p>
             ) : (
               <ol className="relative border-l border-slate-200 ml-2 space-y-4">
-                {prazo.historico
+                {deadline.historico
                   .slice()
                   .reverse()
                   .map((evento, index) => (
@@ -220,9 +220,9 @@ const PrazoDetailPanel = ({
             )}
           </section>
 
-          {prazo.entregueEm && (
+          {deadline.entregueEm && (
             <p className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-2xl px-4 py-3">
-              <CheckCircle2 size={15} /> Entregue em {prazo.entregueEm.data} às {prazo.entregueEm.hora}.
+              <CheckCircle2 size={15} /> Entregue em {deadline.entregueEm.data} às {deadline.entregueEm.hora}.
             </p>
           )}
 

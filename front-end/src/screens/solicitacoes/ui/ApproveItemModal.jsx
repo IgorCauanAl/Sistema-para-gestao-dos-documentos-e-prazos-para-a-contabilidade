@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import Modal from '../../../core/components/ui/Modal';
 import PrazoFields from '../../../core/components/ui/PrazoFields';
-import { MESES, ANOS, ANTECEDENCIA_PADRAO } from '../../../core/domain/documento';
+import { MESES, ANOS, ANTECEDENCIA_PADRAO } from '../../../core/domain/document';
 import { paraBR } from '../../../core/domain/data';
 
 const inputClass =
@@ -24,7 +24,7 @@ const ApproveItemModal = ({ open, onClose, solicitacao, item, onConfirm }) => {
 
   const handleSubmit = () => {
     if (!vencimento) {
-      setError('Informe a data de vencimento do documento.');
+      setError('Informe a data de vencimento do document.');
       return;
     }
     setError('');
@@ -37,7 +37,7 @@ const ApproveItemModal = ({ open, onClose, solicitacao, item, onConfirm }) => {
     <Modal
       open={open}
       onClose={onClose}
-      title="Aceitar documento"
+      title="Aceitar document"
       footer={
         <div className="px-6 py-4 flex justify-end gap-3">
           <button
