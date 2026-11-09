@@ -1,4 +1,4 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper;
 
-public class UsuarioMapper {
+public class RequestMapper {
 }

@@ -1,8 +1,10 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.persistence;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Cliente;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.ClienteRepositoryPort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.Entity.ClienteEntity;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.ClienteMapper;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.ClienteEntity;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.SpringDataClienteRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 import java.util.List;
@@ -16,7 +18,7 @@ public class ClientePersistenceAdapter implements ClienteRepositoryPort {
 
 
     @Override
-    public Cliente salvar(Cliente cliente) {
+    public Customer save (Customer cliente) {
 
         ClienteEntity entity = ClienteMapper.toEntity(cliente);
         ClienteEntity entitySalva = clienteJpaRepository.save(entity);
@@ -24,16 +26,18 @@ public class ClientePersistenceAdapter implements ClienteRepositoryPort {
 
     }
 
-    @Override
-    public Optional<Cliente> buscarPorCnpj(String cnpj) {
 
-        return clienteJpaRepository.buscarPorCnpj(cnpj)
+
+    @Override
+    public Optional<Customer> findByCnpj (String cnpj) {
+
+        return clienteJpaRepository.findByCnpj(cnpj)
                 .map(ClienteMapper::toDomain);
 
     }
 
     @Override
-    public List<Cliente> listarTodos() {
+    public List<Customer> listAll() {
         return clienteJpaRepository.findAll()
                 .stream()
                 .map(ClienteMapper::toDomain)

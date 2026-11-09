@@ -1,7 +1,8 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.Entity;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.Entity.Segurança.Perfil;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -10,6 +11,8 @@ import java.util.Set;
 
 @Entity
 @Table(name = "usuario")
+@Getter
+@Setter
 public class UsuarioEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,5 +36,5 @@ public class UsuarioEntity {
             joinColumns = @JoinColumn(name = "usuario_id"),
             inverseJoinColumns = @JoinColumn(name = "perfil_id")
     )
-    private Set<Perfil> perfis = new HashSet<>();
+    private Set<PerfilEntity> perfis = new HashSet<>();
 }

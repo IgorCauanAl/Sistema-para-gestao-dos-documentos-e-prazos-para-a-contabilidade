@@ -1,21 +1,20 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Cliente;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.Entity.ClienteEntity;
-import org.springframework.stereotype.Component;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.CustomerEntity;
 
-@Component
+
 public final class ClienteMapper {
 
     private ClienteMapper(){}
 
-    public static ClienteEntity toEntity(Cliente cliente){
+    public static CustomerEntity toEntity(Customer cliente){
 
         if(cliente == null ){
             return null;
         }
 
-        ClienteEntity entity = new ClienteEntity();
+        CustomerEntity entity = new CustomerEntity();
 
         entity.setId(cliente.getId());
         entity.setCnpj(cliente.getCnpj());
@@ -30,13 +29,13 @@ public final class ClienteMapper {
         return entity;
     }
 
-    public static Cliente toDomain(ClienteEntity entity){
+    public static Customer toDomain(CustomerEntity entity){
 
         if(entity == null){
             return null;
         }
 
-        return new Cliente(
+        return new Customer(
                 entity.getId(),
                 entity.getCnpj(),
                 entity.getRazaoSocial(),

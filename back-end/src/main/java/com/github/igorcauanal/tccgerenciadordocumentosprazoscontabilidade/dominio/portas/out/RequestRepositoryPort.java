@@ -1,4 +1,4 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out;
 
-public interface ClienteRepositoryPort {
+public interface RequestRepositoryPort {
 }
