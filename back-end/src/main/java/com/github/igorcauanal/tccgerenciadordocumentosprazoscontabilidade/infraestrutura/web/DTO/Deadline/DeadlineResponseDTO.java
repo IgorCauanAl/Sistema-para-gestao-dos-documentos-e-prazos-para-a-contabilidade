@@ -1,8 +1,8 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.web.DTO;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO;
 
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Deadline;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.PrioridadePrazo;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.deadlinePriority;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusDeadline;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +20,7 @@ public class DeadlineResponseDTO {
     private String categoria;
     private String competencia;
     private LocalDate dataVencimento;
-    private PrioridadePrazo prioridade;
+    private deadlinePriority prioridade;
     private StatusDeadline status;
     private LocalDateTime criadoEm;
     private LocalDateTime entregueEm;
@@ -33,15 +33,15 @@ public class DeadlineResponseDTO {
         return new DeadlineResponseDTO(
                 deadline.getId(),
                 deadline.getClienteId(),
-                deadline.getObrigacao(),
-                deadline.getCategoria(),
-                deadline.getCompetencia(),
-                deadline.getDataVencimento(),
+                deadline.getObligation(),
+                deadline.getCategory(),
+                deadline.getCompetence(),
+                deadline.getDueDate(),
                 deadline.getPrioridade(),
                 deadline.getStatus(),
-                deadline.getCriadoEm(),
-                deadline.getEntregueEm(),
-                deadline.isAtrasado(dataAtual)
+                deadline.getCreateIn(),
+                deadline.getDeliveredOn(),
+                deadline.isLate(dataAtual)
         );
 
 
