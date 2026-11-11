@@ -1,7 +1,7 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.web.Controller;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.Controller;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.web.DTO.DeadlineResponseDTO;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.DeadlineService;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.DeadlineServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Deadline.DeadlineResponseDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class DeadlineController {
 
-    private final DeadlineService deadlineService;
+    private final DeadlineServicePort deadlineService;
 
     @GetMapping("/customer/{clienteId}")
     public ResponseEntity<List<DeadlineResponseDTO>> findByCustomer(@PathVariable ("clienteId") Long customerId){
@@ -42,6 +42,8 @@ public class DeadlineController {
         }
 
         deadlineService.finishDeadline(deadLineId);
+
+        return ResponseEntity.noContent().build();
 
     }
 

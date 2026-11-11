@@ -2,15 +2,15 @@ package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domin
 
 import java.util.Objects;
 
-public class Perfil {
+public class Role {
 
     private Long id;
     private String nome;
     private String descricao;
 
-    public Perfil() {}
+    public Role() {}
 
-    public Perfil(Long id, String nome, String descricao) {
+    public Role(Long id, String nome, String descricao) {
         this.id = id;
         this.nome = Objects.requireNonNull(nome);
         this.descricao = descricao;

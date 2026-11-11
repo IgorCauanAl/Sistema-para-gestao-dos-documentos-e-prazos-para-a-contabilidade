@@ -6,7 +6,7 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 
 @Builder
-public class Cliente {
+public class Customer {
 
         private Long id;
         private String cnpj;
@@ -17,12 +17,12 @@ public class Cliente {
         private StatusPendenciaCliente statusPendencia;
         private LocalDateTime ultimoEnvioEm;
 
-        public Cliente() {
+        public Customer() {
         }
 
-        public Cliente(Long id, String cnpj, String razaoSocial, String responsavel,
-                       String email, String enderecoCompleto, StatusPendenciaCliente statusPendencia,
-                       LocalDateTime ultimoEnvioEm) {
+        public Customer(Long id, String cnpj, String razaoSocial, String responsavel,
+                        String email, String enderecoCompleto, StatusPendenciaCliente statusPendencia,
+                        LocalDateTime ultimoEnvioEm) {
                 this.id = id;
                 this.cnpj = cnpj;
                 this.razaoSocial = razaoSocial;

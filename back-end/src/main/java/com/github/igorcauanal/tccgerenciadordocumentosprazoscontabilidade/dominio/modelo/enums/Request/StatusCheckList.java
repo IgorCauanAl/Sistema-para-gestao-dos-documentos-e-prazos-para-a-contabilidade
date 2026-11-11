@@ -1,7 +1,10 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums;
 
-public enum SolicitationStatus {
+public enum StatusCheckList {
 
-    RASCUNHO,ABERTA,CONCLUIDA,CANCELADA
+    PENDENTE,
+    ENVIADO_PELO_CLIENTE,
+    ACEITO,
+    RECUSADO
 
 }

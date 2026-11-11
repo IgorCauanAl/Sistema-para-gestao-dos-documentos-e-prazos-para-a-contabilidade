@@ -1,7 +1,7 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums;
 
-public enum StatusPrazo {
+public enum RequestStatus {
 
-    PENDENTE, EM_ANDAMENTO,ATRASADO,CONCLUIDO
+    RASCUNHO,ABERTA,CONCLUIDA,CANCELADA
 
 }

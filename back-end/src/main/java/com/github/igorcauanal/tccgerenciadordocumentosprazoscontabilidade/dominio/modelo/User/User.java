@@ -3,10 +3,9 @@ package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domin
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
-public class Usuario {
+public class User {
 
     private Long id;
     private String nome;
@@ -14,15 +13,15 @@ public class Usuario {
     private String senhaHash;
     private LocalDateTime criadoEm;
 
-    private Set<Perfil> perfis = new HashSet<>();
+    private Set<Role> perfis = new HashSet<>();
 
 
 
-    public Usuario() {
+    public User() {
     }
 
 
-    public Usuario(Long id, String nome, String email, String senhaHash, LocalDateTime criadoEm) {
+    public User(Long id, String nome, String email, String senhaHash, LocalDateTime criadoEm) {
         this.id = id;
         this.nome = nome;
         this.email = email;
@@ -31,7 +30,7 @@ public class Usuario {
     }
 
 
-    public Usuario(String nome, String email, String senhaHash) {
+    public User(String nome, String email, String senhaHash) {
         this.nome = nome;
         this.email = email;
         this.senhaHash = senhaHash;
@@ -56,11 +55,11 @@ public class Usuario {
         return criadoEm;
     }
 
-    public Set<Perfil> getPerfis() { return Collections.unmodifiableSet(perfis); }
+    public Set<Role> getPerfis() { return Collections.unmodifiableSet(perfis); }
 
 
 
-    public void setPerfis(Set<Perfil> perfis) { this.perfis = new HashSet<>(perfis); }
+    public void setPerfis(Set<Role> perfis) { this.perfis = new HashSet<>(perfis); }
 
     public void setId(Long id) {
         this.id = id;

@@ -1,12 +1,12 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer.Customer;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.CustomerEntity;
 
 
-public final class ClienteMapper {
+public final class CustomerMapper {
 
-    private ClienteMapper(){}
+    private CustomerMapper(){}
 
     public static CustomerEntity toEntity(Customer cliente){
 

@@ -1,6 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Role;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Role.Role;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User.User;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.RoleEntity;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.UserEntity;
 import lombok.AllArgsConstructor;
@@ -10,9 +10,9 @@ import java.util.Set;
 
 
 @AllArgsConstructor
-public final class UsuarioMapper {
+public final class UserMapper {
 
-    private final PerfilMapper perfilMapper;
+    private final RoleMapper roleMapper;
 
 
     public static User toDomain(UserEntity entity){
@@ -31,7 +31,7 @@ public final class UsuarioMapper {
 
         Set<Role> perfis = new HashSet<>();
         for (RoleEntity pe : entity.getPerfis()) {
-            perfis.add(perfilMapper.toDomain(pe));
+            perfis.add(roleMapper.toDomain(pe));
         }
         user.setPerfis(perfis);
 
@@ -55,7 +55,7 @@ public final class UsuarioMapper {
 
         Set<RoleEntity> perfisEntity = new HashSet<>();
         for(Role p : user.getPerfis()){
-            perfisEntity.add(perfilMapper.toReference(p));
+            perfisEntity.add(roleMapper.toReference(p));
         }
 
         entity.setPerfis(perfisEntity);

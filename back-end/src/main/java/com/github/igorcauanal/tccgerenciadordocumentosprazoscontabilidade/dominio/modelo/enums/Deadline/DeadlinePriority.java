@@ -1,6 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums;
 
-public enum PrioridadePrazo {
+public enum deadlinePriority {
 
     ALTA,MEDIA,BAIXA
 
