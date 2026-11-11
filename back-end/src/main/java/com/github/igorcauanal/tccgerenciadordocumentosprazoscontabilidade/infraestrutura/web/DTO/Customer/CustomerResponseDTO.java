@@ -1,7 +1,7 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Cliente;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Customer;
 
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusPendenciaCliente;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Customer.PendingStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ public class ClienteResponseDTO {
     private String responsavel;
     private String email;
     private String enderecoCompleto;
-    private StatusPendenciaCliente statusPendencia;
+    private PendingStatus statusPendencia;
     private LocalDateTime ultimoEnvioEm;
 
 
