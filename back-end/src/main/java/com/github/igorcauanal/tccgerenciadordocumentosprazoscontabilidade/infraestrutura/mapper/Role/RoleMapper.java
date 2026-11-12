@@ -3,35 +3,35 @@ package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infra
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Role.Role;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.RoleEntity;
 
-
 public final class RoleMapper {
 
-    public static Role toDomain(RoleEntity e) {
-        if (e == null) {
-            return null;
-        }
-        return new Role(e.getId(), e.getNome(), e.getDescricao());
+    private RoleMapper() {
     }
 
-
-    public static RoleEntity toReference(Role p) {
-        if (p == null) {
+    public static Role toDomain(RoleEntity entity) {
+        if (entity == null) {
             return null;
         }
-        RoleEntity e = new RoleEntity();
-        e.setId(p.getId());
-        return e;
+        return new Role(entity.getId(), entity.getName(), entity.getDescription());
     }
 
-
-    public static RoleEntity toEntity(Role p) {
-        if (p == null) {
+    public static RoleEntity toReference(Role role) {
+        if (role == null) {
             return null;
         }
-        RoleEntity e = new RoleEntity();
-        e.setId(p.getId());
-        e.setNome(p.getNome());
-        e.setDescricao(p.getDescricao());
-        return e;
+        RoleEntity entity = new RoleEntity();
+        entity.setId(role.getId());
+        return entity;
+    }
+
+    public static RoleEntity toEntity(Role role) {
+        if (role == null) {
+            return null;
+        }
+        RoleEntity entity = new RoleEntity();
+        entity.setId(role.getId());
+        entity.setName(role.getName());
+        entity.setDescription(role.getDescription());
+        return entity;
     }
 }

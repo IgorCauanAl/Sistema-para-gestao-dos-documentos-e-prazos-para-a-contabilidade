@@ -4,39 +4,37 @@ import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domini
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.UserRepositoryPort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.UserEntity;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.User.UserMapper;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.SpringDataUsuarioRepository;
-import lombok.AllArgsConstructor;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.SpringDataUserRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 @Component
-@AllArgsConstructor
 public class UserPersistenceAdapter implements UserRepositoryPort {
 
-    private final SpringDataUsuarioRepository usuarioRepository;
-    private final UserMapper userMapper;
+    private final SpringDataUserRepository usuarioRepository;
 
+    public UserPersistenceAdapter(SpringDataUserRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
 
     @Override
     public User save(User user) {
-        UserEntity entity = userMapper.toEntity(user);
-        UserEntity entitySalva = usuarioRepository.save(entity);
-
-        return userMapper.toDomain(entitySalva);
+        UserEntity entity = UserMapper.toEntity(user);
+        UserEntity savedEntity = usuarioRepository.save(entity);
+        return UserMapper.toDomain(savedEntity);
     }
 
-
     @Override
-    public Optional<User> findByid(Long id) {
+    public Optional<User> findById(Long id) {
         return usuarioRepository.findById(id)
-                .map(userMapper::toDomain);
+                .map(UserMapper::toDomain);
     }
 
     @Override
     public Optional<User> findByEmail(String email) {
         return usuarioRepository.findByEmail(email)
-                .map(userMapper::toDomain);
+                .map(UserMapper::toDomain);
     }
 
     @Override

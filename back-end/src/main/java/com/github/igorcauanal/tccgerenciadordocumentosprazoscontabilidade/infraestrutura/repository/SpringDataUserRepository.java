@@ -7,15 +7,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface SpringDataUsuarioRepository extends JpaRepository<Long, UserEntity> {
+public interface SpringDataUserRepository extends JpaRepository<UserEntity, Long> {
 
+    Optional<UserEntity> findByEmail(String email);
 
-    UserEntity save (UserEntity usuario);
-
-
-    Optional<UserEntity> findById(Long id);
-
-    Optional<UserEntity> findByEmail (String email);
-
-    boolean existsByEmail (String email);
+    boolean existsByEmail(String email);
 }

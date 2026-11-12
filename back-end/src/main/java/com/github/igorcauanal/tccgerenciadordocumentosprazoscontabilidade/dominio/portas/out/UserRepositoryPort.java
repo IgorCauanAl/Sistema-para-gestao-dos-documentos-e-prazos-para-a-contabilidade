@@ -12,5 +12,5 @@ public interface UserRepositoryPort {
 
     Optional<User> findByEmail(String email);
 
-    boolean existsByEmail (String email);
+    boolean existsByEmail(String email);
 }

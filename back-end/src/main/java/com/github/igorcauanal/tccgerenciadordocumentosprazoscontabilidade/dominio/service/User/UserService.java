@@ -2,47 +2,35 @@ package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domin
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.EmailNotFoundException;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.InvalidPasswordException;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User.AuthenticatedUser;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User.User;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.AutenticacaoServicePort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.User.TokenResponseDTO;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.AuthenticateServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.UserRepositoryPort;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
-
-public class UserService implements AutenticacaoServicePort {
+@Service
+public class UserService implements AuthenticateServicePort {
 
     private final UserRepositoryPort userRepositoryPort;
-    private final User user;
+    private final PasswordEncoder passwordEncoder;
 
-    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
-    public UserService(UserRepositoryPort userRepositoryPort, User user){
+    public UserService(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
         this.userRepositoryPort = userRepositoryPort;
-        this.user = user;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
+    public AuthenticatedUser authenticate(String email, String password) {
+        User user = userRepositoryPort.findByEmail(email)
+                .orElseThrow(() -> new EmailNotFoundException(email));
 
-    //Falta a implementação do JWT
-    public TokenResponseDTO autenticar(String email, String senha) {
-
-        Optional<User> emailUsuario = userRepositoryPort.findByEmail(email);
-
-        if(emailUsuario == null){
-            throw new EmailNotFoundException(email);
-        }
-
-
-
-        boolean senhaCorreta = encoder.matches(senha, user.getSenhaHash());
-
-        if(senhaCorreta == false){
+        boolean passwordMatches = passwordEncoder.matches(password, user.getPasswordHash());
+        if (!passwordMatches) {
+            // Senha inválida para o e-mail informado.
             throw new InvalidPasswordException();
         }
 
-
-        return null;
+        return new AuthenticatedUser(user.getId(), user.getName(), user.getEmail());
     }
 }

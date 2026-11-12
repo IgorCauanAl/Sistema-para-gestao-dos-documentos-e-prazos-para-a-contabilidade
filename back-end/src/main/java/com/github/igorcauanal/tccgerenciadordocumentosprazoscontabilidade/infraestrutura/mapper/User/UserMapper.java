@@ -1,70 +1,63 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.User;
+
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Role.Role;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User.User;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.RoleEntity;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.UserEntity;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Role.RoleMapper;
-import lombok.AllArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
 
-
-@AllArgsConstructor
 public final class UserMapper {
 
-    private final RoleMapper roleMapper;
+    private UserMapper() {
+    }
 
-
-    public static User toDomain(UserEntity entity){
-
-        if (entity == null){
+    public static User toDomain(UserEntity entity) {
+        if (entity == null) {
             return null;
         }
 
         User user = new User(
                 entity.getId(),
-                entity.getNome(),
+                entity.getName(),
                 entity.getEmail(),
-                entity.getSenhaHash(),
-                entity.getCriadoEm()
+                entity.getPasswordHash(),
+                entity.getCreatedAt()
         );
 
-        Set<Role> perfis = new HashSet<>();
-        for (RoleEntity pe : entity.getPerfis()) {
-            perfis.add(roleMapper.toDomain(pe));
+        Set<Role> roles = new HashSet<>();
+        if (entity.getProfiles() != null) {
+            for (RoleEntity roleEntity : entity.getProfiles()) {
+                roles.add(RoleMapper.toDomain(roleEntity));
+            }
         }
-        user.setPerfis(perfis);
+        user.setRoles(roles);
 
         return user;
-
     }
 
-
-    public static UserEntity toEntity(User user){
-
-        if(user == null){
+    public static UserEntity toEntity(User user) {
+        if (user == null) {
             return null;
         }
 
         UserEntity entity = new UserEntity();
-
         entity.setId(user.getId());
-        entity.setNome(user.getNome());
-        entity.setCriadoEm(user.getCriadoEm());
+        entity.setName(user.getName());
         entity.setEmail(user.getEmail());
+        entity.setPasswordHash(user.getPasswordHash());
+        entity.setCreatedAt(user.getCreatedAt());
 
-        Set<RoleEntity> perfisEntity = new HashSet<>();
-        for(Role p : user.getPerfis()){
-            perfisEntity.add(roleMapper.toReference(p));
+        Set<RoleEntity> profiles = new HashSet<>();
+        if (user.getRoles() != null) {
+            for (Role role : user.getRoles()) {
+                profiles.add(RoleMapper.toReference(role));
+            }
         }
-
-        entity.setPerfis(perfisEntity);
+        entity.setProfiles(profiles);
 
         return entity;
-
     }
-
-
-
 }

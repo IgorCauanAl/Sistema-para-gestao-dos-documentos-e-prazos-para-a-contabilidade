@@ -5,33 +5,39 @@ import java.util.Objects;
 public class Role {
 
     private Long id;
-    private String nome;
-    private String descricao;
+    private String name;
+    private String description;
 
-    public Role() {}
-
-    public Role(Long id, String nome, String descricao) {
-        this.id = id;
-        this.nome = Objects.requireNonNull(nome);
-        this.descricao = descricao;
+    public Role() {
     }
 
-    public Long getId(){
-        return id; }
+    public Role(Long id, String name, String description) {
+        this.id = id;
+        this.name = Objects.requireNonNull(name);
+        this.description = description;
+    }
 
-    public String getNome(){
-        return nome; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getDescricao(){
-        return descricao; }
+    public String getName() {
+        return name;
+    }
 
-    public void setId(Long id){
-        this.id = id; }
+    public String getDescription() {
+        return description;
+    }
 
-    public void setNome(String nome) {
-        this.nome = nome; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public void setDescricao(String descricao) {
-        this.descricao = descricao; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }

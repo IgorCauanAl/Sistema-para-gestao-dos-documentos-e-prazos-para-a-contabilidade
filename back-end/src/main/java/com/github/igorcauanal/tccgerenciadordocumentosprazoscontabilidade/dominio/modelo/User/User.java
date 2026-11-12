@@ -10,80 +10,76 @@ import java.util.Set;
 public class User {
 
     private Long id;
-    private String nome;
+    private String name;
     private String email;
-    private String senhaHash;
-    private LocalDateTime criadoEm;
+    private String passwordHash;
+    private LocalDateTime createdAt;
 
-    private Set<Role> perfis = new HashSet<>();
-
-
+    private Set<Role> roles = new HashSet<>();
 
     public User() {
     }
 
-
-    public User(Long id, String nome, String email, String senhaHash, LocalDateTime criadoEm) {
+    public User(Long id, String name, String email, String passwordHash, LocalDateTime createdAt) {
         this.id = id;
-        this.nome = nome;
+        this.name = name;
         this.email = email;
-        this.senhaHash = senhaHash;
-        this.criadoEm = criadoEm;
+        this.passwordHash = passwordHash;
+        this.createdAt = createdAt;
     }
 
-
-    public User(String nome, String email, String senhaHash) {
-        this.nome = nome;
+    public User(String name, String email, String passwordHash) {
+        this.name = name;
         this.email = email;
-        this.senhaHash = senhaHash;
-        this.criadoEm = LocalDateTime.now();
+        this.passwordHash = passwordHash;
+        this.createdAt = LocalDateTime.now();
     }
 
     public Long getId() {
         return id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getName() {
+        return name;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public String getSenhaHash(){return senhaHash;}
-
-    public LocalDateTime getCriadoEm() {
-        return criadoEm;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public Set<Role> getPerfis() { return Collections.unmodifiableSet(perfis); }
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
-
-
-    public void setPerfis(Set<Role> perfis) { this.perfis = new HashSet<>(perfis); }
+    public Set<Role> getRoles() {
+        return Collections.unmodifiableSet(roles);
+    }
 
     public void setId(Long id) {
         this.id = id;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
 
-    public void setSenhaHash(String senhaHash) {
-        this.senhaHash = senhaHash;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
-    public void setCriadoEm(LocalDateTime criadoEm) {
-        this.criadoEm = criadoEm;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
-
-
-
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles == null ? new HashSet<>() : new HashSet<>(roles);
+    }
 }
