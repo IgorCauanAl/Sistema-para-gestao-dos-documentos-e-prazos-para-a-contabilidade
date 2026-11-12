@@ -1,10 +1,9 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in;
 
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.User.TokenResponseDTO;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.web.DTO.Usuario.AutenticacaoRequestDTO;
+public interface AutenticacaoServicePort {
 
-public interface AutenticaçãoServicePort {
-
-    public AutenticacaoRequestDTO autenticar(String email, String senha);
+    TokenResponseDTO autenticar(String email, String senha);
 
 }

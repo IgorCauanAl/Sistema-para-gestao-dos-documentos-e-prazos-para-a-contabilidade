@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.exception;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception;
 
 public class EmailNotFoundException extends RuntimeException {
     public EmailNotFoundException(String email) {

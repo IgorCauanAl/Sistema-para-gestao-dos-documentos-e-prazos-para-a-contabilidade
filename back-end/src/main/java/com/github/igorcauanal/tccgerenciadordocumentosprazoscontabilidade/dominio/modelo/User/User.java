@@ -1,4 +1,6 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User;
+
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Role.Role;
 
 import java.time.LocalDateTime;
 import java.util.Collections;

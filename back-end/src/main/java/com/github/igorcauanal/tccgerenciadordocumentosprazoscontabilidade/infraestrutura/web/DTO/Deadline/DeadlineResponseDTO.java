@@ -1,50 +1,44 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.dto.deadline;
 
-
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Deadline;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.deadlinePriority;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusDeadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Deadline.Deadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.CurrentStage;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.DeadlinePriority;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.StatusDeadline;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Getter
 @AllArgsConstructor
 public class DeadlineResponseDTO {
 
     private Long id;
-    private Long clienteId;
-    private String obrigacao;
-    private String categoria;
-    private String competencia;
-    private LocalDate dataVencimento;
-    private deadlinePriority prioridade;
+    private Long customerId;
+    private String customerName;
+    private String category;
+    private String competence;
+    private LocalDate dueDate;
+    private DeadlinePriority priority;
+    private CurrentStage currentStage;
     private StatusDeadline status;
-    private LocalDateTime criadoEm;
-    private LocalDateTime entregueEm;
-    private boolean atrasado;
+    private boolean late;
 
-
-
-    public static DeadlineResponseDTO deDominio(Deadline deadline, LocalDate dataAtual) {
-
+    public static DeadlineResponseDTO fromDomain(Deadline deadline,
+                                                 String customerName,
+                                                 LocalDate referenceDate) {
         return new DeadlineResponseDTO(
                 deadline.getId(),
-                deadline.getClienteId(),
+                deadline.getCustomerId(),
+                customerName,
                 deadline.getObligation(),
                 deadline.getCategory(),
                 deadline.getCompetence(),
                 deadline.getDueDate(),
-                deadline.getPrioridade(),
+                deadline.getPriority(),
+                deadline.getCurrentStage(),
                 deadline.getStatus(),
-                deadline.getCreateIn(),
-                deadline.getDeliveredOn(),
-                deadline.isLate(dataAtual)
+                deadline.isLate(referenceDate)
         );
-
-
     }
-
 }

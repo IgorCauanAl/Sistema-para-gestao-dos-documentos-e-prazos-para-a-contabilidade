@@ -1,6 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusPendenciaCliente;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Customer.PendingStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Table(name = "cliente")
-public class ClienteEntity {
+public class CustomerEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,24 +22,24 @@ public class ClienteEntity {
     @Column(name = "cnpj", nullable = false, unique = true, length = 18)
     private String cnpj;
 
-    @Column(name = "razao_social", nullable = false, length = 200)
-    private String razaoSocial;
+    @Column(name = "corporate_name", nullable = false, length = 200)
+    private String  corporateName;
 
-    @Column(name = "responsavel", length = 150)
-    private String responsavel;
+    @Column(name = "responsible", length = 150)
+    private String responsible;
 
     @Column(name = "email", length = 150)
     private String email;
 
-    @Column(name = "endereco_completo", length = 500)
-    private String enderecoCompleto;
+    @Column(name = "full_address", length = 500)
+    private String fullAddress;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status_pendencia", nullable = false, length = 30)
-    private StatusPendenciaCliente statusPendencia;
+    @Column(name = "pending_status", nullable = false, length = 30)
+    private PendingStatus pendingStatus;
 
-    @Column(name = "ultimo_envio_em")
-    private LocalDateTime ultimoEnvioEm;
+    @Column(name = "last_posted_on")
+    private LocalDateTime lastPostedOn;
 
 }
 

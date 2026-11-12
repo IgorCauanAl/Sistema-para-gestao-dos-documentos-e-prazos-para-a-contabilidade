@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Document;
 import java.io.InputStream;
 
 public interface StorageDeviceArchivePort {

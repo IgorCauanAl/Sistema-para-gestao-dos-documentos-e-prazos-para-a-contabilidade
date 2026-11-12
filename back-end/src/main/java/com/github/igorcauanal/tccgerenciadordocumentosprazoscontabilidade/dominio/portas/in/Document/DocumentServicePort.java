@@ -1,16 +1,30 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.Document;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document;
+
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document.Document;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.DocumentDirection;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.FileFormat;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.SendChannel;
+
+import java.io.InputStream;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
-public interface DocumentRepositoryPort {
+public interface DocumentServicePort {
 
-     Document save(Document document);
+     Document saveDocument(InputStream fileStream,
+                           String originalFileName,
+                           Long customerId,
+                           String documentType,
+                           String competence,
+                           LocalDate dueDate,
+                           SendChannel sendChannel,
+                           DocumentDirection direction,
+                           FileFormat fileFormat);
 
-     Optional<Document> findById(Long id);
+     DocumentFile viewDocument(Long documentId);
 
-     List<Document> findAll();
+     DocumentFile downloadDocument(Long documentId);
 
-     List<Document> findByDirection(DocumentDirection direction);
+     record DocumentFile(Document metadata, InputStream content) {}
+
 }

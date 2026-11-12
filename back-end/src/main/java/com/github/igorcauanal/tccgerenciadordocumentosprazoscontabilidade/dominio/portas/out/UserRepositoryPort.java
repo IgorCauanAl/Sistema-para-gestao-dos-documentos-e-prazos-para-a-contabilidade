@@ -1,10 +1,10 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User.User;
 
 import java.util.Optional;
 
-public interface UsuarioRepositoryPort {
+public interface UserRepositoryPort {
 
     User save(User user);
 

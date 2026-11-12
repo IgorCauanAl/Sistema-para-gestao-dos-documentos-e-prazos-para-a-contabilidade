@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Role;
 
 import java.util.Objects;
 

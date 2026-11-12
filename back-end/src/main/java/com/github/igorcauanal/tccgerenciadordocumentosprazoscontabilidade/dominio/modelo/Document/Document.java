@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.BusinessException;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.DocumentDirection;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.FileFormat;
@@ -119,7 +119,7 @@ public class Document {
         return extension.equals(fileFormat.name());
     }
 
-    // ---- Métodos semânticos de transição de estado ----
+    // Métodos semânticos de transição de estado
 
     public void markAsSent() {
         if (status != StatusDocument.CRIADO) {

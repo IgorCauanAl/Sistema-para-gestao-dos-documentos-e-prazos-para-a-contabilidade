@@ -1,10 +1,9 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.aplicacao.Deadline;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.Deadline;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.DeadlineNotFoundException;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Deadline.Deadline;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.Deadline.DeadlineServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Deadline.DeadlineRepositoryPort;
-
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;

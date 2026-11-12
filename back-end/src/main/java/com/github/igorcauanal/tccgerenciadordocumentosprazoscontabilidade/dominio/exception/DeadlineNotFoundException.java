@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.exception;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception;
 
 public class DeadlineNotFoundException extends RuntimeException {
     public DeadlineNotFoundException(Long prazoId) {

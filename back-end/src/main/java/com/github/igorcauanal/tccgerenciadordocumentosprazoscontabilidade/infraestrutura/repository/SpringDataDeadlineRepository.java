@@ -1,17 +1,45 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusDeadline;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.PrazoEntity;
+
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.StatusDeadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.deadline.DeadlineListItemReadModel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.DeadlineEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface SpringDataPrazoRepository extends JpaRepository<PrazoEntity, Long> {
+public interface SpringDataDeadlineRepository extends JpaRepository<DeadlineEntity, Long> {
 
-    List<PrazoEntity> findByCustomer(Long clienteId);
+    List<DeadlineEntity> findByCustomer(Long clienteId);
 
-    List<PrazoEntity> findByStatusAndExpiration(StatusDeadline statusDeadline, LocalDate dataVencimento);
+    List<DeadlineEntity> findByStatusAndDueDate(StatusDeadline statusDeadline, LocalDate dueDate);
+
+    @Query("SELECT COUNT(d) FROM DeadlineEntity d WHERE d.dueDate < :today AND d.status NOT IN :closedStatuses")
+    long countOverdue(@Param("today") LocalDate today, @Param("closedStatuses") List<StatusDeadline> closedStatuses);
+
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.deadline.DeadlineListItemReadModel(" +
+            "d.id, d.customerId, c.corporateName, d.obligation, d.category, d.competence, " +
+            "d.dueDate, d.priority, d.currentStage, d.status, " +
+            "CASE WHEN (d.status NOT IN :closedStatuses AND d.dueDate < :today) THEN true ELSE false END) " +
+            "FROM DeadlineEntity d, CustomerEntity c " +
+            "WHERE c.id = d.customerId " +
+            "ORDER BY d.dueDate ASC, d.id ASC")
+    List<DeadlineListItemReadModel> listAllReadModels(@Param("today") LocalDate today,
+                                                      @Param("closedStatuses") List<StatusDeadline> closedStatuses);
+
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.deadline.DeadlineListItemReadModel(" +
+            "d.id, d.customerId, c.corporateName, d.obligation, d.category, d.competence, " +
+            "d.dueDate, d.priority, d.currentStage, d.status, " +
+            "CASE WHEN (d.status NOT IN :closedStatuses AND d.dueDate < :today) THEN true ELSE false END) " +
+            "FROM DeadlineEntity d, CustomerEntity c " +
+            "WHERE c.id = d.customerId AND d.customerId = :customerId " +
+            "ORDER BY d.dueDate ASC, d.id ASC")
+    List<DeadlineListItemReadModel> listReadModelsByCustomerId(@Param("customerId") Long customerId,
+                                                               @Param("today") LocalDate today,
+                                                               @Param("closedStatuses") List<StatusDeadline> closedStatuses);
 
 }

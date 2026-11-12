@@ -1,13 +1,13 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.persistence;
-
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.persistence.Document;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document.Document;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.DocumentDirection;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Document.DocumentRepositoryPort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.DocumentEntity;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.Document.DocumentEntity;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Document.DocumentMapper;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.SpringDataDocumentoRepository;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.Document.SpringDataDocumentRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,28 +15,36 @@ import java.util.Optional;
 @AllArgsConstructor
 public class DocumentPersistenceAdapter implements DocumentRepositoryPort {
 
-    private final SpringDataDocumentoRepository documentoRepository;
+    private final SpringDataDocumentRepository documentRepository;
 
     @Override
+    @Transactional
     public Document save(Document document) {
-
         DocumentEntity entity = DocumentMapper.toEntity(document);
-        DocumentEntity entityDocumentoSalva = documentoRepository.save(entity);
-        return DocumentMapper.toDomain(entityDocumentoSalva);
-
-
+        DocumentEntity saved = documentRepository.save(entity);
+        return DocumentMapper.toDomain(saved);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Document> findById(Long id) {
-        return documentoRepository.findById(id)
+        return documentRepository.findById(id)
                 .map(DocumentMapper::toDomain);
     }
 
     @Override
-    public List<Document> listAll() {
+    @Transactional(readOnly = true)
+    public List<Document> findAll() {
+        return documentRepository.findAll()
+                .stream()
+                .map(DocumentMapper::toDomain)
+                .toList();
+    }
 
-        return documentoRepository.findAll()
+    @Override
+    @Transactional(readOnly = true)
+    public List<Document> findByDirection(DocumentDirection direction) {
+        return documentRepository.findByDirection(direction)
                 .stream()
                 .map(DocumentMapper::toDomain)
                 .toList();

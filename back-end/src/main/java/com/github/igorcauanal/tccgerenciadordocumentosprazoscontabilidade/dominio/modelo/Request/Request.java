@@ -1,7 +1,7 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Request;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.BusinessException;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.RequestStatus;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Request.RequestStatus;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

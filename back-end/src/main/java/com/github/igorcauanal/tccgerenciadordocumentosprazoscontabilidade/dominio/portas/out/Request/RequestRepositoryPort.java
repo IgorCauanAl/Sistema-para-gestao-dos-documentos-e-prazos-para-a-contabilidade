@@ -1,6 +1,6 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Request;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Request;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Request.Request;
 
 import java.util.List;
 import java.util.Optional;

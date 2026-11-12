@@ -1,50 +1,37 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.Controller;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.Controller.Deadline;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.DeadlineServicePort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Deadline.DeadlineResponseDTO;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.deadline.DeadlineListItemReadModel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.Deadline.DeadlineServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.query.DeadlineQueryPort;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/deadline")
+@RequestMapping({"/deadlines", "/deadline"})
 @AllArgsConstructor
 public class DeadlineController {
 
     private final DeadlineServicePort deadlineService;
+    private final DeadlineQueryPort deadlineQueryPort;
 
-    @GetMapping("/customer/{clienteId}")
-    public ResponseEntity<List<DeadlineResponseDTO>> findByCustomer(@PathVariable ("clienteId") Long customerId){
-
-        if(customerId == null ){
-            throw new IllegalArgumentException("Customer Id inválido");
-        }
-
-        LocalDate today = LocalDate.now();
-
-        List<DeadlineResponseDTO> deadlines = deadlineService.findByCustomer(customerId)
-                .stream()
-                .map(deadline -> DeadlineResponseDTO.deDominio(deadline, today))
-                .toList();
-
-        return ResponseEntity.ok(deadlines);
-
+    // Tabela principal de prazos (read model)
+    @GetMapping
+    public ResponseEntity<List<DeadlineListItemReadModel>> listAll() {
+        return ResponseEntity.ok(deadlineQueryPort.listAll());
     }
 
-    @PatchMapping("/finish/{id}")
-    public ResponseEntity<Void> finishDeadline(@PathVariable ("id") Long deadLineId){
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<DeadlineListItemReadModel>> listByCustomer(@PathVariable Long customerId) {
+        return ResponseEntity.ok(deadlineQueryPort.listByCustomerId(customerId));
+    }
 
-        if(deadLineId == null){
-            throw new IllegalArgumentException("Deadline Id é inválido");
-        }
-
-        deadlineService.finishDeadline(deadLineId);
-
+    // Chamado APÓS a confirmação na UI ("Marcar como entregue" → tela de confirmação → PATCH)
+    @PatchMapping("/{deadlineId}/deliver")
+    public ResponseEntity<Void> markAsDelivered(@PathVariable Long deadlineId) {
+        deadlineService.markAsDelivered(deadlineId);
         return ResponseEntity.noContent().build();
-
     }
-
 }

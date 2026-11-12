@@ -13,28 +13,28 @@ import java.util.Set;
 @Table(name = "usuario")
 @Getter
 @Setter
-public class UsuarioEntity {
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nome", nullable = false, length = 100)
-    private String nome;
+    @Column(name = "name", nullable = false, length = 100)
+    private String name;
 
     @Column(name = "email", nullable = false, unique = true, length = 150)
     private String email;
 
-    @Column(name = "senha_hash", nullable = false, length = 60)
-    private String senhaHash;
+    @Column(name = "password_hash", nullable = false, length = 60)
+    private String passwordHash;
 
-    @Column(name = "criado_em", nullable = false, updatable = false)
-    private LocalDateTime criadoEm;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "usuarios_perfis",
-            joinColumns = @JoinColumn(name = "usuario_id"),
-            inverseJoinColumns = @JoinColumn(name = "perfil_id")
+            name = "user_profile",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "profile_id")
     )
-    private Set<PerfilEntity> perfis = new HashSet<>();
+    private Set<RoleEntity> profiles = new HashSet<>();
 }

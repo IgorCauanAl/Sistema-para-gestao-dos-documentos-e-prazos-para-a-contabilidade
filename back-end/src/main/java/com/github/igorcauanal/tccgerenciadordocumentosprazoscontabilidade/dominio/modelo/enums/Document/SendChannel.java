@@ -1,5 +1,5 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document;
 
-public enum CanalEnvio {
+public enum SendChannel {
     WHATSAPP, EMAIL, OUTRO
 }

@@ -1,6 +1,6 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document;
 
-public enum FormatoArquivo {
+public enum FileFormat {
 
     PDF,OFX,XML,XLSX,CSV,TXT
 

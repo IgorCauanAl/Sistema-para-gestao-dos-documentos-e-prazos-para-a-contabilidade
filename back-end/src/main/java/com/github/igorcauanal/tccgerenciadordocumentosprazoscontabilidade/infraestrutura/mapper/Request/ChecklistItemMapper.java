@@ -1,9 +1,8 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Request;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Request.ChecklistItem;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.Request.ChecklistItemEntity;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.ChecklistItem;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.ChecklistItemEntity;
-
-public class ChecklistItemMapper {
+public final class ChecklistItemMapper {
 
     private ChecklistItemMapper() {}
 
@@ -15,13 +14,13 @@ public class ChecklistItemMapper {
         ChecklistItemEntity entity = new ChecklistItemEntity();
         entity.setId(item.getId());
         entity.setDescription(item.getDescription());
-        entity.setExpectedFileFormat(item.getFormatFileExpected());
+        entity.setFormatFileExpected(item.getFormatFileExpected());
         entity.setStatus(item.getStatus());
-        entity.setUploadedFileName(item.getNameFileSent());
-        entity.setSentAt(item.getSubmitedOn());
-        entity.setReviewedAt(item.getRevisedOn());
-        entity.setRejectionReason(item.getReasonRefusal());
-
+        entity.setNameFileSent(item.getNameFileSent());
+        entity.setUploadedDocumentId(item.getUploadedDocumentId());
+        entity.setSubmitedOn(item.getSubmitedOn());
+        entity.setRevisedOn(item.getRevisedOn());
+        entity.setReasonRefusal(item.getReasonRefusal());
         return entity;
     }
 
@@ -33,14 +32,13 @@ public class ChecklistItemMapper {
         return ChecklistItem.rebuild(
                 entity.getId(),
                 entity.getDescription(),
-                entity.getExpectedFileFormat(),
+                entity.getFormatFileExpected(),
                 entity.getStatus(),
-                entity.getUploadedFileName(),
-                entity.getSentAt(),
-                entity.getReviewedAt(),
-                entity.getRejectionReason()
+                entity.getNameFileSent(),
+                entity.getUploadedDocumentId(),
+                entity.getSubmitedOn(),
+                entity.getRevisedOn(),
+                entity.getReasonRefusal()
         );
     }
 }
-
-

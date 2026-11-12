@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.User;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.EmailNotFoundException;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.InvalidPasswordException;
@@ -11,14 +11,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.Optional;
 
 
-public class UsuarioService implements AutenticacaoServicePort {
+public class UserService implements AutenticacaoServicePort {
 
     private final UserRepositoryPort userRepositoryPort;
     private final User user;
 
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public UsuarioService (UserRepositoryPort userRepositoryPort, User user){
+    public UserService(UserRepositoryPort userRepositoryPort, User user){
         this.userRepositoryPort = userRepositoryPort;
         this.user = user;
     }

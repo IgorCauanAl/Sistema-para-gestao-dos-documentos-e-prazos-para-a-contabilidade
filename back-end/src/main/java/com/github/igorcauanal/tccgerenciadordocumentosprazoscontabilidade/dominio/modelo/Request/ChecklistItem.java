@@ -1,7 +1,7 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Request;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.BusinessException;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusCheckList;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Request.StatusCheckList;
 
 import java.time.LocalDateTime;
 
@@ -12,6 +12,7 @@ public class ChecklistItem {
         private String formatFileExpected;
         private StatusCheckList status;
         private String nameFileSent;
+        private Long uploadedDocumentId;
         private LocalDateTime submitedOn;
         private LocalDateTime revisedOn;
         private String reasonRefusal;
@@ -24,6 +25,7 @@ public class ChecklistItem {
                                         String expectedFileFormat,
                                         StatusCheckList status,
                                         String nameFileSent,
+                                        Long uploadedDocumentId,
                                         LocalDateTime submitedOn,
                                         LocalDateTime revisedOn,
                                         String reasonRefusal) {
@@ -33,6 +35,7 @@ public class ChecklistItem {
         item.formatFileExpected = expectedFileFormat;
         item.status = status;
         item.nameFileSent = nameFileSent;
+        item.uploadedDocumentId = uploadedDocumentId;
         item.submitedOn = submitedOn;
         item.revisedOn = revisedOn;
         item.reasonRefusal = reasonRefusal;
@@ -54,18 +57,22 @@ public class ChecklistItem {
         }
 
 
-        public void registerShipping(String nameArchive, LocalDateTime when) {
+        public void registerShipping(String nameArchive, Long uploadedDocumentId, LocalDateTime when) {
             if (nameArchive == null || nameArchive.isBlank()) {
                 throw new BusinessException("Nome do arquivo é obrigatório");
             }
-            if (status != status.PENDENTE && status != status.RECUSADO) {
+            if (uploadedDocumentId == null) {
+                throw new BusinessException("Documento enviado é obrigatório");
+            }
+            if (status != StatusCheckList.PENDENTE && status != StatusCheckList.RECUSADO) {
                 throw new BusinessException("Item não pode receber um novo upload no status: " + status);
             }
             this.nameFileSent = nameArchive;
-            this.revisedOn = when;
+            this.uploadedDocumentId = uploadedDocumentId;
+            this.submitedOn = when;
             this.revisedOn = null;
             this.reasonRefusal = null;
-            this.status = status.ENVIADO_PELO_CLIENTE;
+            this.status = StatusCheckList.ENVIADO_PELO_CLIENTE;
         }
 
         public void accepterShipping(LocalDateTime when) {
@@ -97,6 +104,7 @@ public class ChecklistItem {
         public String getFormatFileExpected() { return formatFileExpected; }
         public StatusCheckList getStatus() { return status; }
         public String getNameFileSent() { return nameFileSent; }
+        public Long getUploadedDocumentId() { return uploadedDocumentId; }
         public LocalDateTime getSubmitedOn() { return submitedOn; }
         public LocalDateTime getRevisedOn() { return revisedOn; }
         public String getReasonRefusal() { return reasonRefusal; }

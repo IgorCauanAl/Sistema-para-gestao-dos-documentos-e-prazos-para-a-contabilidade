@@ -1,61 +1,50 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Deadline;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Deadline.Deadline;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.DeadlineEntity;
 
 public final class DeadlineMapper {
 
+    private DeadlineMapper() {}
 
-    private DeadlineMapper(){}
-
-    public static DeadlineEntity toEntity (Deadline deadline){
-
-        if(deadline == null ){
+    public static DeadlineEntity toEntity(Deadline deadline) {
+        if (deadline == null) {
             return null;
         }
 
-        return DeadlineEntity.reconstituir(
+        return DeadlineEntity.reconstitute(
                 deadline.getId(),
-                deadline.getClienteId(),
+                deadline.getCustomerId(),
                 deadline.getObligation(),
                 deadline.getCategory(),
                 deadline.getCompetence(),
                 deadline.getDueDate(),
-                deadline.getPrioridade(),
-                deadline.getStatus(),
-                deadline.getCreateIn(),
-                deadline.getDeliveredOn(),
+                deadline.getPriority(),
+                deadline.getCreatedAt(),
                 deadline.getCurrentStage(),
-                null //@LastModifiedDate preencher
+                deadline.getStatus(),
+                deadline.getDeliveredOn(),
+                null
         );
     }
 
-
-
-
-    public static Deadline toDomain (DeadlineEntity entity){
-
-
-        if(entity == null ){
+    public static Deadline toDomain(DeadlineEntity entity) {
+        if (entity == null) {
             return null;
         }
 
-        return new Deadline(
+        return Deadline.reconstitute(
                 entity.getId(),
                 entity.getCustomerId(),
                 entity.getObligation(),
                 entity.getCategory(),
                 entity.getCompetence(),
-                entity.getExpiration(),
-                entity.getPriorirityDeadline(),
-                entity.getStatusDeadline(),
-                entity.getCreateIn(),
-                entity.getDeliveryOn(),
-                entity.getCurrentStage()
+                entity.getDueDate(),
+                entity.getPriority(),
+                entity.getCreatedAt(),
+                entity.getCurrentStage(),
+                entity.getStatus(),
+                entity.getDeliveredOn()
         );
-
     }
-
-
 }
-

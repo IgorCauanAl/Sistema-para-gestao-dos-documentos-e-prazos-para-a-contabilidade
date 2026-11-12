@@ -1,28 +1,33 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository;
-
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.Document;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.DocumentDirection;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.StatusDocument;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.DocumentEntity;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.document.DocumentListItemReadModel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.Document.DocumentEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface SpringDataDocumentoRepository extends JpaRepository<DocumentEntity,Long> {
+@Repository
+public interface SpringDataDocumentRepository extends JpaRepository<DocumentEntity, Long> {
 
-    Optional<DocumentEntity> findById(Long id);
+    List<DocumentEntity> findByDirection(DocumentDirection direction);
+    List<DocumentEntity> findByCustomerId(Long customerId);
+    List<DocumentEntity> findByDirectionAndStatus(DocumentDirection direction, StatusDocument status);
 
-    DocumentEntity save (DocumentEntity documento);
+    @Query("SELECT COUNT(d) FROM DocumentEntity d WHERE d.direction = :direction AND d.status IN :statuses")
+    long countByDirectionAndStatusIn(@Param("direction") DocumentDirection direction,
+                                     @Param("statuses") List<StatusDocument> statuses);
 
-    List<DocumentEntity> findAll();
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.document.DocumentListItemReadModel(" +
+            "d.id, d.customerId, d.documentType, d.competence, d.dueDate, d.sendChannel, d.direction, d.status, d.fileFormat, d.fileName, d.createdIn) " +
+            "FROM DocumentEntity d ORDER BY d.createdIn DESC")
+    List<DocumentListItemReadModel> listAllReadModels();
 
-    List<DocumentEntity> findByClient (Long clienteId);
-
-    List<DocumentEntity> findByDirectionStatus (DocumentDirection documentDirection, StatusDocument statusDocument);
-
-
-
-
-
-
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.document.DocumentListItemReadModel(" +
+            "d.id, d.customerId, d.documentType, d.competence, d.dueDate, d.sendChannel, d.direction, d.status, d.fileFormat, d.fileName, d.createdIn) " +
+            "FROM DocumentEntity d WHERE d.direction = :direction ORDER BY d.createdIn DESC")
+    List<DocumentListItemReadModel> listReadModelsByDirection(@Param("direction") DocumentDirection direction);
 }

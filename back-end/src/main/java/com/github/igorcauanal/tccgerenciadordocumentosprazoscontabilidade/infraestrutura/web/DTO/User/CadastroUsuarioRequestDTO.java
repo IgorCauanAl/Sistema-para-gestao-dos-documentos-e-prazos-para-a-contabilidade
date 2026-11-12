@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Usuario;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.User;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

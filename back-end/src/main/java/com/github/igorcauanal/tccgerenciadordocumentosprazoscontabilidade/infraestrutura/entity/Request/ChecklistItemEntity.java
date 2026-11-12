@@ -1,50 +1,59 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity;
-
-
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusCheckList;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.Request;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Request.StatusCheckList;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "checklist_item")
-@Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@Table(name = "checklist_item")
 public class ChecklistItemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "request_id", nullable = false)
-    private RequestEntity request;
-
-    @Column(name = "description", nullable = false, length = 255)
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(name = "expected_file_format", nullable = false, length = 50)
-    private String expectedFileFormat;
+    @Column(name = "formatFileExpected")
+    private String formatFileExpected;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private StatusCheckList status;
 
-    @Column(name = "uploaded_file_name", length = 255)
-    private String uploadedFileName;
+    @Column(name = "nameFileSent")
+    private String nameFileSent;
 
-    @Column(name = "sent_at")
-    private LocalDateTime sentAt;
+    @Column(name = "uploaded_document_id")
+    private Long uploadedDocumentId;
 
-    @Column(name = "reviewed_at")
-    private LocalDateTime reviewedAt;
+    @Column(name = "submitedOn")
+    private LocalDateTime submitedOn;
 
-    @Column(name = "rejection_reason", length = 500)
-    private String rejectionReason;
+    @Column(name = "revisedOn")
+    private LocalDateTime revisedOn;
+
+    @Column(name = "reasonRefusal")
+    private String reasonRefusal;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id", nullable = false)
+    private RequestEntity request;
+
+    // Setters
+    public void setId(Long id)                              { this.id = id; }
+    public void setDescription(String description)          { this.description = description; }
+    public void setFormatFileExpected(String v)             { this.formatFileExpected = v; }
+    public void setStatus(StatusCheckList status)       { this.status = status; }
+    public void setNameFileSent(String nameFileSent)        { this.nameFileSent = nameFileSent; }
+    public void setUploadedDocumentId(Long uploadedDocumentId) { this.uploadedDocumentId = uploadedDocumentId; }
+    public void setSubmitedOn(LocalDateTime submitedOn)     { this.submitedOn = submitedOn; }
+    public void setRevisedOn(LocalDateTime revisedOn)       { this.revisedOn = revisedOn; }
+    public void setReasonRefusal(String reasonRefusal)      { this.reasonRefusal = reasonRefusal; }
+    public void setRequest(RequestEntity request)           { this.request = request; }
 }

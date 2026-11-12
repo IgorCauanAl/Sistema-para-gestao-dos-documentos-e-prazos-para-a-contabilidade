@@ -1,4 +1,4 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Customer;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer.Customer;
 
@@ -7,10 +7,13 @@ import java.util.Optional;
 
 public interface CustomerRepositoryPort {
 
-    Customer save (Customer cliente);
+    Customer save(Customer customer);
+
+    Optional<Customer> findById(Long id);
 
     Optional<Customer> findByCnpj(String cnpj);
 
     List<Customer> listAll();
 
+    void deleteById(Long id);
 }

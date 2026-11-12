@@ -1,14 +1,12 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service;
-
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.Document;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.NotFoundDocumentException;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document.Document;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.DocumentDirection;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.FileFormat;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.SendChannel;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.Document.DocumentServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Document.DocumentRepositoryPort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Document.StorageDeviceArchivePort;
-
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.List;

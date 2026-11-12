@@ -1,149 +1,109 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.PrioridadePrazo;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.StatusDeadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.CurrentStage;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.DeadlinePriority;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.StatusDeadline;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 
 @Entity
 @NoArgsConstructor
 @Getter
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "prazo")
-public class PrazoEntity {
+public class DeadlineEntity {
 
-
-    //Factory
-    public static PrazoEntity reconstituir(
+    //Fábrica
+    public static DeadlineEntity reconstitute(
             Long id,
-            Long clienteId,
-            String obrigacao,
-            String categoria,
-            String competencia,
-            LocalDate dataVencimento,
-            PrioridadePrazo prioridadePrazo,
-            StatusDeadline statusDeadline,
-            LocalDateTime criadoEm,
-            LocalDateTime entregueEm,
-            String etapaAtual,
-            LocalDateTime atualizadoEm) {
+            Long customerId,
+            String obligation,
+            String category,
+            String competence,
+            LocalDate dueDate,
+            DeadlinePriority priority,
+            LocalDateTime createdAt,
+            CurrentStage currentStage,
+            StatusDeadline status,
+            LocalDateTime deliveredOn,
+            LocalDateTime updatedAt) {
 
-        PrazoEntity entity = new PrazoEntity();
+        DeadlineEntity entity = new DeadlineEntity();
         entity.setId(id);
-        entity.setCustomerId(clienteId);
-        entity.setObligation(obrigacao);
-        entity.setCategory(categoria);
-        entity.setCompetence(competencia);
-        entity.setExpiration(dataVencimento);
-        entity.setPriorirityDeadline(prioridadePrazo);
-        entity.setStatusDeadline(statusDeadline);
-        entity.setCreateIn(criadoEm);
-        entity.setDeliveryOn(entregueEm);
-        entity.setCurrentStage(etapaAtual);
-        entity.setUpdatedOn(atualizadoEm);
+        entity.setCustomerId(customerId);
+        entity.setObligation(obligation);
+        entity.setCategory(category);
+        entity.setCompetence(competence);
+        entity.setDueDate(dueDate);
+        entity.setPriority(priority);
+        entity.setCreatedAt(createdAt);
+        entity.setCurrentStage(currentStage);
+        entity.setStatus(status);
+        entity.setDeliveredOn(deliveredOn);
+        entity.setUpdatedAt(updatedAt);
         return entity;
     }
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "customerId", nullable = false)
+    private Long customerId;
+
+    @Column(name = "obligation", nullable = false, length = 255)
+    private String obligation;
+
+    @Column(name = "category", length = 100)
+    private String category;
+
+    @Column(name = "competence", length = 7)
+    private String competence;
+
+    @Column(name = "dueDate", nullable = false)
+    private LocalDate dueDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false, length = 20)
+    private DeadlinePriority priority;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private StatusDeadline status;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "delivered_on")
+    private LocalDateTime deliveredOn;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "current_stage", length = 50)
+    private CurrentStage currentStage;
+
+    @LastModifiedDate
+    @Column(name = "update_at", nullable = false)
+    private LocalDateTime updatedAt;
 
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
+    public void setCustomerId(Long customerId)                { this.customerId = customerId; }
+    public void setObligation(String obligation)              { this.obligation = obligation; }
+    public void setCategory(String category)                  { this.category = category; }
+    public void setCompetence(String competence)              { this.competence = competence; }
+    public void setDueDate(LocalDate dueDate)                 { this.dueDate = dueDate; }
+    public void setPriority(DeadlinePriority priority)        { this.priority = priority; }
+    public void setCurrentStage(CurrentStage currentStage)    { this.currentStage = currentStage; }
 
-        @Column(name = "cliente_id", nullable = false)
-        private Long customerId;
-
-        @Column(name = "obrigacao", nullable = false, length = 255)
-        private String obligation;
-
-        @Column(name = "categoria", length = 100)
-        private String category;
-
-        @Column(name = "competencia", length = 7)
-        private String competence;
-
-        @Column(name = "data_vencimento", nullable = false)
-        private LocalDate expiration;
-
-        @Enumerated(EnumType.STRING)
-        @Column(name = "prioridade", nullable = false, length = 20)
-        private PrioridadePrazo priorirityDeadline;
-
-        @Enumerated(EnumType.STRING)
-        @Column(name = "status", nullable = false, length = 20)
-        private StatusDeadline statusDeadline;
-
-        @CreatedDate
-        @Column(name = "criado_em", nullable = false, updatable = false)
-        private LocalDateTime createIn;
-
-        @Column(name = "entregue_em")
-        private LocalDateTime deliveryOn;
-
-        @Column(name = "etapa_atual", length = 50)
-        private String currentStage;
-
-        @LastModifiedDate
-        @Column(name = "atualizado_em", nullable = false)
-        private LocalDateTime updatedOn;
-
-
-    //Implementei os setter manualmente para proteger os atributos de modificação como atualizadoEm e o criadoem e o entregue em
-    public void setCustomerId(Long customerId) {
-        this.customerId = customerId;
-    }
-
-    public void setObligation(String obligation) {
-        this.obligation = obligation;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public void setCompetence(String competency) {
-        this.competence = competency;
-    }
-
-    public void setExpiration(LocalDate dueDate) {
-        this.expiration = dueDate;
-    }
-
-    public void setPriorirityDeadline(PrioridadePrazo priorityDeadline) {
-        this.priorirityDeadline = priorityDeadline;
-    }
-
-    public void setCurrentStage(String currentStage) {
-        this.currentStage = currentStage;
-    }
-
-    protected void setId(Long id) {
-        this.id = id;
-    }
-
-    protected void setStatusDeadline(StatusDeadline statusDeadline) {
-        this.statusDeadline = statusDeadline;
-    }
-
-    protected void setCreateIn(LocalDateTime createIn) {
-        this.createIn = createIn;
-    }
-
-    protected void setDeliveryOn(LocalDateTime deliveryOn) {
-        this.deliveryOn = deliveryOn;
-    }
-
-    protected void setUpdatedOn(LocalDateTime updatedOn) {
-        this.updatedOn = updatedOn;
-    }
-
-
-
+    // usados pela factory de reconstituição
+    protected void setId(Long id)                             { this.id = id; }
+    protected void setStatus(StatusDeadline status)           { this.status = status; }
+    protected void setCreatedAt(LocalDateTime createdAt)      { this.createdAt = createdAt; }
+    protected void setDeliveredOn(LocalDateTime deliveredOn)  { this.deliveredOn = deliveredOn; }
+    protected void setUpdatedAt(LocalDateTime updatedAt)      { this.updatedAt = updatedAt; }
 }

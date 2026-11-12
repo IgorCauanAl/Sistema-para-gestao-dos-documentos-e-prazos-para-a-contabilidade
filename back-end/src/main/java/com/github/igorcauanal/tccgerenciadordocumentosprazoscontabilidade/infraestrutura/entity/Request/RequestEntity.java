@@ -1,8 +1,7 @@
-package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity;
+package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.Request;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.RequestStatus;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Request.RequestStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,7 +14,6 @@ import java.util.List;
 @Entity
 @Table(name = "request")
 @Getter
-@Setter
 @NoArgsConstructor
 public class RequestEntity {
 
@@ -87,6 +85,17 @@ public class RequestEntity {
         entity.setCancelledIn(cancelledIn);
         return entity;
     }
+
+
+    public void setId(Long id)                          { this.id = id; }
+    public void setCustomerId(Long customerId)          { this.customerId = customerId; }
+    public void setTitle(String title)                  { this.title = title; }
+    public void setCompetence(String competence)        { this.competence = competence; }
+    public void setDeadline(LocalDate deadline)         { this.deadline = deadline; }
+    public void setStatus(RequestStatus status)         { this.status = status; }
+    public void setCreatedIn(LocalDateTime createdIn)   { this.createdIn = createdIn; }
+    public void setCompletedIn(LocalDateTime v)         { this.completedIn = v; }
+    public void setCancelledIn(LocalDateTime v)         { this.cancelledIn = v; }
 
 
 

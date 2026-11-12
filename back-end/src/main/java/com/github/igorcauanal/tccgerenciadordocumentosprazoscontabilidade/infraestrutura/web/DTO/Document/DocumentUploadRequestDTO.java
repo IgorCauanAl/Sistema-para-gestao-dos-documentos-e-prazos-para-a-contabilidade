@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,30 +17,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @Setter
-public class DocumentoResponseDTO {
+public class DocumentUploadRequestDTO {
 
-    private Long id;
-
-    private Long clienteId;
-
-    private String tipoDocumento;
-
-    private String competencia;
-
-    private LocalDate dataVencimento;
-
-    private SendChannel canal;
-
-    private DocumentDirection direcao;
-
-    private StatusDocument status;
-
-    private String nomeArquivo;
-
-    private String urlArquivo;
-
-    private FileFormat fileFormat;
-
-    private LocalDateTime criadoEm;
+        private MultipartFile file;
+        private Long customerId;
+        private String documentType;
+        private String competence;
+        private LocalDate dueDate;
+        private SendChannel sendChannel;
+        private DocumentDirection direction;
+        private FileFormat fileFormat;
 
 }
