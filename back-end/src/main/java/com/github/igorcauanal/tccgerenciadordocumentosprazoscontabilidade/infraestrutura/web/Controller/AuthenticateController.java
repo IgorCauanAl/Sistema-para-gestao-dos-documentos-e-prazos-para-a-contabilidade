@@ -1,11 +1,10 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.Controller;
 
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.TokenServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security.SecurityRoles;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security.SecurityUserPrincipal;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.User.AutenticacaoRequestDTO;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.User.AuthenticationResponseDTO;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,9 +12,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,21 +23,19 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthenticateController {
 
     private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository;
+    private final TokenServicePort tokenService;
 
     public AuthenticateController(
             AuthenticationManager authenticationManager,
-            SecurityContextRepository securityContextRepository
+            TokenServicePort tokenService
     ) {
         this.authenticationManager = authenticationManager;
-        this.securityContextRepository = securityContextRepository;
+        this.tokenService = tokenService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponseDTO> login(
-            @Valid @RequestBody AutenticacaoRequestDTO request,
-            HttpServletRequest httpRequest,
-            HttpServletResponse httpResponse
+            @Valid @RequestBody AutenticacaoRequestDTO request
     ) {
         Authentication authentication;
         try {
@@ -58,16 +52,15 @@ public class AuthenticateController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito ao contador");
         }
 
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-        securityContextRepository.saveContext(context, httpRequest, httpResponse);
-
         SecurityUserPrincipal principal = (SecurityUserPrincipal) authentication.getPrincipal();
+
+        String token = tokenService.generateToken(principal.getUser());
+
         return ResponseEntity.ok(new AuthenticationResponseDTO(
                 principal.getId(),
                 principal.getName(),
-                principal.getEmail()
+                principal.getEmail(),
+                token
         ));
     }
 }

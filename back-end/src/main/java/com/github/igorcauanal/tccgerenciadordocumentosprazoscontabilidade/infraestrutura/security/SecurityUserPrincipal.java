@@ -10,14 +10,13 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Adapter que expõe o usuário do domínio para o Spring Security sem acoplar o
- * modelo de domínio às classes do framework.
- */
+//Adapter que expõe o usuário do domínio para o Spring Security sem acoplar o modelo de domínio às classes do framework.
+
 public final class SecurityUserPrincipal implements UserDetails {
 
     private static final long serialVersionUID = 1L;
 
+    private final User user;
     private final Long id;
     private final String name;
     private final String email;
@@ -25,11 +24,16 @@ public final class SecurityUserPrincipal implements UserDetails {
     private final List<GrantedAuthority> authorities;
 
     public SecurityUserPrincipal(User user) {
+        this.user = user;
         this.id = user.getId();
         this.name = user.getName();
         this.email = user.getEmail();
         this.passwordHash = user.getPasswordHash();
         this.authorities = mapAuthorities(user);
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public Long getId() {

@@ -7,10 +7,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-/**
- * Adapter de infraestrutura que conecta o UserRepositoryPort (hexagonal) ao
- * UserDetailsService exigido pelo Spring Security.
- */
+//Adapter de infraestrutura que conecta o UserRepositoryPort (hexagonal) ao UserDetailsService exigido pelo Spring Security.
+
 @Service
 public class DomainUserDetailsService implements UserDetailsService {
 

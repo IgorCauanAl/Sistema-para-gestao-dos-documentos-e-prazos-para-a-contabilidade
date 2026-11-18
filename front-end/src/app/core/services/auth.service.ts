@@ -6,12 +6,14 @@ export interface UsuarioAutenticado {
   id: number;
   nome: string;
   email: string;
+  token: string;
 }
 
 interface AuthenticationResponseDTO {
   id: number;
   name: string;
   email: string;
+  token: string;
 }
 
 export const CREDENCIAIS_DEMO = {
@@ -26,7 +28,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
 
   private readonly usuarioSubject = new BehaviorSubject<UsuarioAutenticado | null>(
-    this.restaurarUsuario()
+    this.restaurarUsuario(),
   );
 
   readonly usuario$ = this.usuarioSubject.asObservable();
@@ -39,25 +41,26 @@ export class AuthService {
     return this.usuario !== null;
   }
 
+  get token(): string | null {
+    return this.usuario?.token ?? null;
+  }
+
   async login(email: string, senha: string, lembrarDeMim: boolean): Promise<UsuarioAutenticado> {
     const emailNormalizado = email.trim().toLowerCase();
 
     try {
-      // Obtém o cookie XSRF-TOKEN antes do primeiro POST (proteção CSRF).
-      await firstValueFrom(this.http.get('/auth/csrf', { withCredentials: true }));
-
       const resposta = await firstValueFrom(
-        this.http.post<AuthenticationResponseDTO>(
-          '/auth/login',
-          { email: emailNormalizado, password: senha },
-          { withCredentials: true }
-        )
+        this.http.post<AuthenticationResponseDTO>('/auth/login', {
+          email: emailNormalizado,
+          password: senha,
+        }),
       );
 
       const usuario: UsuarioAutenticado = {
         id: resposta.id,
         nome: resposta.name,
         email: resposta.email,
+        token: resposta.token,
       };
 
       const storage = lembrarDeMim ? localStorage : sessionStorage;
@@ -71,10 +74,7 @@ export class AuthService {
   }
 
   logout(): void {
-    void firstValueFrom(
-      this.http.post<void>('/auth/logout', null, { withCredentials: true })
-    ).catch(() => undefined);
-
+    // Stateless: logout é apenas local, sem sessão no servidor.
     localStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(STORAGE_KEY);
     this.usuarioSubject.next(null);
@@ -102,12 +102,13 @@ export class AuthService {
       if (
         typeof dados.id === 'number' &&
         typeof dados.nome === 'string' &&
-        typeof dados.email === 'string'
+        typeof dados.email === 'string' &&
+        typeof dados.token === 'string'
       ) {
-        return { id: dados.id, nome: dados.nome, email: dados.email };
+        return { id: dados.id, nome: dados.nome, email: dados.email, token: dados.token };
       }
     } catch {
-      // Dados de sessão inválidos são descartados.
+      // Storage corrompido é ignorado.
     }
 
     return null;

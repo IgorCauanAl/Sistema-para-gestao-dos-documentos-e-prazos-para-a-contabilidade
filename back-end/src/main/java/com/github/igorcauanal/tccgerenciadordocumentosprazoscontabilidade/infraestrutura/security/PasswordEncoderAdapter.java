@@ -4,10 +4,8 @@ import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domini
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/**
- * Adapter que expõe o BCrypt do Spring Security ao domínio sem acoplar o
- * núcleo da aplicação ao framework.
- */
+// Adapter que expõe o BCrypt do Spring Security ao domínio sem acoplar o núcleo da aplicação ao framework.
+
 @Component
 public class PasswordEncoderAdapter implements PasswordEncoderPort {
 

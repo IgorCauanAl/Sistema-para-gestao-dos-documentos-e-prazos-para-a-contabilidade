@@ -21,7 +21,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -68,7 +67,6 @@ class CustomerIntegrationTest {
         String json = customerJson("12345678000190", "Alpha Tecnologia", "Carlos Almeida", "contato@alpha.com", "Rua A, 1");
 
         MvcResult result = mockMvc.perform(post("/customers")
-                        .with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
@@ -86,13 +84,11 @@ class CustomerIntegrationTest {
         String json = customerJson("99999999000199", "Beta Comercio", "Mariana Costa", "financeiro@beta.com", "Rua B, 2");
 
         mockMvc.perform(post("/customers")
-                        .with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/customers")
-                        .with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isConflict());
@@ -108,7 +104,6 @@ class CustomerIntegrationTest {
                 .when(customerRepositorySpy).save(any());
 
         MvcResult result = mockMvc.perform(post("/customers")
-                        .with(csrf())
                         .contentType(APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().is5xxServerError())

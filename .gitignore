@@ -25,7 +25,20 @@ replay_pid*
 
 .idea
 
-# Front-end (Vite)
+# Front-end (Angular)
 front-end/node_modules/
 front-end/dist/
 front-end/.vite/
+front-end/.angular/
+front-end/coverage/
+*.tsbuildinfo
+
+# Arquivos locais do sistema/IDE
+.DS_Store
+Thumbs.db
+*.swp
+
+# Variáveis de ambiente (credenciais locais)
+.env
+.env.*
+!.env.example
