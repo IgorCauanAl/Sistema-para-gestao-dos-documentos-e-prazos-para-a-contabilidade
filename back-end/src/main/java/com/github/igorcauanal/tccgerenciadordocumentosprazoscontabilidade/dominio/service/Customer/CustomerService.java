@@ -1,9 +1,10 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.Customer;
+
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.AlreadyRegisteredCustomerException;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.CustomerNotFoundException;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer.Customer;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.Customer.CustomerServicePort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Customer.CustomerRepositoryPort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Customer.Customer;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.Customer.CustomerServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Customer.CustomerRepositoryPort;
 
 import java.util.List;
 

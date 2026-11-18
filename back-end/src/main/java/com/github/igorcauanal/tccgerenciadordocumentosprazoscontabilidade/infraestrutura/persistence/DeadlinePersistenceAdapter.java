@@ -1,8 +1,8 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.persistence;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Deadline.Deadline;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.StatusDeadline;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Deadline.DeadlineRepositoryPort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Deadline.Deadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Deadline.StatusDeadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Deadline.DeadlineRepositoryPort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.DeadlineEntity;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Deadline.DeadlineMapper;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.SpringDataDeadlineRepository;
@@ -37,7 +37,7 @@ public class DeadlinePersistenceAdapter implements DeadlineRepositoryPort {
 
     @Override
     public List<Deadline> listByCustomer(Long clienteId) {
-        return dataDeadlineRepository.findByCustomer(clienteId)
+        return dataDeadlineRepository.findByCustomerId(clienteId)
                 .stream()
                 .map(DeadlineMapper::toDomain)
                 .toList();

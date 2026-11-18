@@ -1,7 +1,7 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository;
 
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.customer.CustomerListItemReadModel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.customer.CustomerListItemReadModel;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.CustomerEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,7 +20,7 @@ public interface SpringDataCustomerRepository extends JpaRepository<CustomerEnti
 
     List<CustomerEntity> findAll();
 
-    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.customer.CustomerListItemReadModel(" +
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.customer.CustomerListItemReadModel(" +
             "c.id, c.cnpj, c.corporateName, c.responsible, c.email, c.pendingStatus, c.lastPostedOn) " +
             "FROM CustomerEntity c " +
             "ORDER BY c.corporateName ASC")

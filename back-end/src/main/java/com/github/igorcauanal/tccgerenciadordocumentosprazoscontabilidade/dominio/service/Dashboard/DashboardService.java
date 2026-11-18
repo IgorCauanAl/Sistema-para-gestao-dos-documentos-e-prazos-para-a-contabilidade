@@ -1,11 +1,9 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.Dashboard;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.dashboard.DashboardSummaryReadModel;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.dashboard.DashboardQueryServicePort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.query.DashboardSummaryQueryPort;
-import org.springframework.stereotype.Service;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.dashboard.DashboardSummaryReadModel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.dashboard.DashboardQueryServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.query.DashboardSummaryQueryPort;
 
-@Service
 public class DashboardService implements DashboardQueryServicePort {
 
     private final DashboardSummaryQueryPort dashboardSummaryQueryPort;

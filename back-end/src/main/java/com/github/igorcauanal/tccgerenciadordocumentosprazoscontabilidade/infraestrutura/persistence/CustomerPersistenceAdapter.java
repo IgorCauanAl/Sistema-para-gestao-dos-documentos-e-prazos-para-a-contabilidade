@@ -1,7 +1,7 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.persistence;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer.Customer;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Customer.CustomerRepositoryPort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Customer.Customer;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Customer.CustomerRepositoryPort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Customer.CustomerMapper;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.CustomerEntity;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.SpringDataCustomerRepository;
@@ -42,5 +42,16 @@ public class CustomerPersistenceAdapter implements CustomerRepositoryPort {
                 .stream()
                 .map(CustomerMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Optional<Customer> findById(Long id) {
+        return clienteJpaRepository.findById(id)
+                .map(CustomerMapper::toDomain);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        clienteJpaRepository.deleteById(id);
     }
 }

@@ -2,22 +2,20 @@ package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domin
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.EmailNotFoundException;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.InvalidPasswordException;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User.AuthenticatedUser;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.User.User;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.AuthenticateServicePort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.UserRepositoryPort;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.AuthenticatedUser;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.User;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.AuthenticateServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.PasswordEncoderPort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.UserRepositoryPort;
 
-@Service
 public class UserService implements AuthenticateServicePort {
 
     private final UserRepositoryPort userRepositoryPort;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoderPort passwordEncoderPort;
 
-    public UserService(UserRepositoryPort userRepositoryPort, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepositoryPort userRepositoryPort, PasswordEncoderPort passwordEncoderPort) {
         this.userRepositoryPort = userRepositoryPort;
-        this.passwordEncoder = passwordEncoder;
+        this.passwordEncoderPort = passwordEncoderPort;
     }
 
     @Override
@@ -25,7 +23,7 @@ public class UserService implements AuthenticateServicePort {
         User user = userRepositoryPort.findByEmail(email)
                 .orElseThrow(() -> new EmailNotFoundException(email));
 
-        boolean passwordMatches = passwordEncoder.matches(password, user.getPasswordHash());
+        boolean passwordMatches = passwordEncoderPort.matches(password, user.getPasswordHash());
         if (!passwordMatches) {
             // Senha inválida para o e-mail informado.
             throw new InvalidPasswordException();

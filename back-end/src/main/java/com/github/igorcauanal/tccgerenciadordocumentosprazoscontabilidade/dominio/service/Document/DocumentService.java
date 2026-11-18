@@ -1,12 +1,13 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.Document;
+
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.NotFoundDocumentException;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document.Document;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.DocumentDirection;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.FileFormat;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.SendChannel;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.Document.DocumentServicePort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Document.DocumentRepositoryPort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Document.StorageDeviceArchivePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Document.Document;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.DocumentDirection;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.FileFormat;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.SendChannel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.Document.DocumentServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Document.DocumentRepositoryPort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Document.StorageDeviceArchivePort;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.List;
@@ -58,25 +59,24 @@ public class DocumentService implements DocumentServicePort {
     }
 
     @Override
-    public DocumentFile viewDocument(Long documentId) {
+    public DocumentServicePort.DocumentFile viewDocument(Long documentId) {
         Document document = load(documentId);
         document.markAsViewed();
         documentRepositoryPort.save(document);                                // ← 1 save
         InputStream content = storageDeviceArchivePort.load(document.getStoragePath());
-        return new DocumentFile(document, content);
+        return new DocumentServicePort.DocumentFile(document, content);
     }
 
     @Override
-    public DocumentFile downloadDocument(Long documentId) {
+    public DocumentServicePort.DocumentFile downloadDocument(Long documentId) {
         Document document = load(documentId);
         document.markAsDownloaded();
         documentRepositoryPort.save(document);
         InputStream content = storageDeviceArchivePort.load(document.getStoragePath());
-        return new DocumentFile(document, content);
+        return new DocumentServicePort.DocumentFile(document, content);
     }
 
 
-    @Override
     public List<Document> listDocuments(DocumentDirection direction) {
         if (direction == null) {
             return documentRepositoryPort.findAll();

@@ -1,7 +1,7 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Deadline.StatusDeadline;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.deadline.DeadlineListItemReadModel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Deadline.StatusDeadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.deadline.DeadlineListItemReadModel;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.DeadlineEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,14 +14,14 @@ import java.util.List;
 @Repository
 public interface SpringDataDeadlineRepository extends JpaRepository<DeadlineEntity, Long> {
 
-    List<DeadlineEntity> findByCustomer(Long clienteId);
+    List<DeadlineEntity> findByCustomerId(Long clienteId);
 
     List<DeadlineEntity> findByStatusAndDueDate(StatusDeadline statusDeadline, LocalDate dueDate);
 
     @Query("SELECT COUNT(d) FROM DeadlineEntity d WHERE d.dueDate < :today AND d.status NOT IN :closedStatuses")
     long countOverdue(@Param("today") LocalDate today, @Param("closedStatuses") List<StatusDeadline> closedStatuses);
 
-    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.deadline.DeadlineListItemReadModel(" +
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.deadline.DeadlineListItemReadModel(" +
             "d.id, d.customerId, c.corporateName, d.obligation, d.category, d.competence, " +
             "d.dueDate, d.priority, d.currentStage, d.status, " +
             "CASE WHEN (d.status NOT IN :closedStatuses AND d.dueDate < :today) THEN true ELSE false END) " +
@@ -31,7 +31,7 @@ public interface SpringDataDeadlineRepository extends JpaRepository<DeadlineEnti
     List<DeadlineListItemReadModel> listAllReadModels(@Param("today") LocalDate today,
                                                       @Param("closedStatuses") List<StatusDeadline> closedStatuses);
 
-    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.deadline.DeadlineListItemReadModel(" +
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.deadline.DeadlineListItemReadModel(" +
             "d.id, d.customerId, c.corporateName, d.obligation, d.category, d.competence, " +
             "d.dueDate, d.priority, d.currentStage, d.status, " +
             "CASE WHEN (d.status NOT IN :closedStatuses AND d.dueDate < :today) THEN true ELSE false END) " +

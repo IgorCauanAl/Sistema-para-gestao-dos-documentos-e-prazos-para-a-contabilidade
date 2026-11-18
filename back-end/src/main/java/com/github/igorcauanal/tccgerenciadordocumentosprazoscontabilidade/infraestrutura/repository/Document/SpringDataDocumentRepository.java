@@ -1,7 +1,7 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.repository.Document;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.DocumentDirection;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.enums.Document.StatusDocument;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.document.DocumentListItemReadModel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.DocumentDirection;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.StatusDocument;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.document.DocumentListItemReadModel;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.Document.DocumentEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -21,12 +21,12 @@ public interface SpringDataDocumentRepository extends JpaRepository<DocumentEnti
     long countByDirectionAndStatusIn(@Param("direction") DocumentDirection direction,
                                      @Param("statuses") List<StatusDocument> statuses);
 
-    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.document.DocumentListItemReadModel(" +
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.document.DocumentListItemReadModel(" +
             "d.id, d.customerId, d.documentType, d.competence, d.dueDate, d.sendChannel, d.direction, d.status, d.fileFormat, d.fileName, d.createdIn) " +
             "FROM DocumentEntity d ORDER BY d.createdIn DESC")
     List<DocumentListItemReadModel> listAllReadModels();
 
-    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.readmodel.document.DocumentListItemReadModel(" +
+    @Query("SELECT new com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.document.DocumentListItemReadModel(" +
             "d.id, d.customerId, d.documentType, d.competence, d.dueDate, d.sendChannel, d.direction, d.status, d.fileFormat, d.fileName, d.createdIn) " +
             "FROM DocumentEntity d WHERE d.direction = :direction ORDER BY d.createdIn DESC")
     List<DocumentListItemReadModel> listReadModelsByDirection(@Param("direction") DocumentDirection direction);

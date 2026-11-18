@@ -1,11 +1,11 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Document.DTO;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Document.Document;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Document.Document;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Document.DocumentResponseDTO;
 import java.util.List;
 
 public class DocumentDTOMapper {
 
-    private DocumentDtoMapper() {}
+    private DocumentDTOMapper() {}
 
     public static DocumentResponseDTO toResponseDTO(Document document) {
         if (document == null) {
@@ -36,7 +36,4 @@ public class DocumentDTOMapper {
                 .map(DocumentDTOMapper::toResponseDTO)
                 .toList();
     }
-}
-
-
 }

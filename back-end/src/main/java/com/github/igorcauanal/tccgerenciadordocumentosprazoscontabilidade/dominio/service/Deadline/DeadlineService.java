@@ -1,9 +1,10 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.service.Deadline;
 
+
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.DeadlineNotFoundException;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Deadline.Deadline;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.in.Deadline.DeadlineServicePort;
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.portas.out.Deadline.DeadlineRepositoryPort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Deadline.Deadline;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.Deadline.DeadlineServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Deadline.DeadlineRepositoryPort;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +19,6 @@ public class DeadlineService implements DeadlineServicePort {
         this.clock = clock;
     }
 
-    @Override
     public List<Deadline> listByCustomer(Long customerId) {
         if (customerId == null) {
             throw new IllegalArgumentException("customerId é obrigatório");

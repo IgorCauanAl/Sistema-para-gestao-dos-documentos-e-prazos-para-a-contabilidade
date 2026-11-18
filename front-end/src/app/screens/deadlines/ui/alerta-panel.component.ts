@@ -1,0 +1,145 @@
+import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  LucideAlertTriangle,
+  LucideBellRing,
+  LucideCalendarRange,
+  LucideMail,
+  LucideX,
+} from '@lucide/angular';
+
+import type { Cliente, Prazo } from '../../../core/domain/models';
+import { estaAtrasado } from '../../../core/domain/prazo';
+import type { AlertasPrazo } from '../../../core/services/prazo.service';
+
+@Component({
+  selector: 'app-alerta-panel',
+  standalone: true,
+  imports: [CommonModule, LucideAlertTriangle, LucideBellRing, LucideCalendarRange, LucideMail, LucideX],
+  template: `
+    @if (open) {
+      <div class="fixed inset-0 z-40" (mousedown)="onClose.emit()" role="presentation">
+        <div
+          role="dialog"
+          aria-label="Alertas de prazos"
+          (mousedown)="$event.stopPropagation()"
+          class="absolute left-24 top-6 w-96 max-h-[80vh] overflow-y-auto bg-white rounded-3xl shadow-xl border border-slate-200/70 p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="p-2 rounded-2xl bg-orange-50 text-orange-500">
+                <svg lucideBellRing [size]="18"></svg>
+              </span>
+              <h3 class="text-base font-bold text-slate-800">Alertas de prazos</h3>
+            </div>
+            <button
+              type="button"
+              (click)="onClose.emit()"
+              aria-label="Fechar alertas"
+              class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
+            >
+              <svg lucideX [size]="18"></svg>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            (click)="onSimularEmail.emit()"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors"
+          >
+            <svg lucideMail [size]="15"></svg> Simular resumo diário por e-mail
+          </button>
+
+          @if (alertas.total === 0) {
+            <p class="text-sm text-slate-400 text-center py-6">Nenhum alerta no momento. Bom trabalho!</p>
+          } @else {
+            <div class="space-y-4">
+              <ng-container
+                *ngTemplateOutlet="
+                  grupo;
+                  context: {
+                    titulo: 'Atrasados',
+                    tom: 'text-red-600',
+                    itens: alertas.atrasados,
+                  }
+                "
+              ></ng-container>
+              <ng-container
+                *ngTemplateOutlet="
+                  grupo;
+                  context: {
+                    titulo: 'Vencem esta semana',
+                    tom: 'text-amber-600',
+                    itens: alertas.semana,
+                  }
+                "
+              ></ng-container>
+              <ng-container
+                *ngTemplateOutlet="
+                  grupo;
+                  context: {
+                    titulo: 'Entram na janela de alerta',
+                    tom: 'text-indigo-600',
+                    itens: alertas.janela,
+                  }
+                "
+              ></ng-container>
+            </div>
+          }
+
+          <p class="flex items-center gap-1.5 text-xs text-slate-400 pt-1 border-t border-slate-100">
+            <svg lucideAlertTriangle [size]="13"></svg>
+            <svg lucideCalendarRange [size]="13"></svg> Prazos entregues não geram alertas.
+          </p>
+        </div>
+      </div>
+
+      <ng-template #grupo let-titulo="titulo" let-tom="tom" let-itens="itens">
+        @if (itens.length > 0) {
+          <div class="space-y-1.5">
+            <p class="text-xs font-semibold uppercase tracking-wider" [class]="tom">
+              {{ titulo }} ({{ itens.length }})
+            </p>
+            @for (prazo of itens; track prazo.id) {
+              <button
+                type="button"
+                (click)="onSelect.emit(prazo)"
+                class="w-full text-left px-3 py-2.5 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-colors"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-sm font-semibold text-slate-700">{{ prazo.obrigacao }}</span>
+                  <span
+                    class="text-xs font-medium"
+                    [class]="estaAtrasado(prazo, hoje) ? 'text-red-500' : 'text-slate-400'"
+                  >
+                    {{ prazo.vencimentoAtual }}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">
+                  {{ nomeCliente(prazo.clienteId) }} · {{ prazo.competencia }}
+                </p>
+              </button>
+            }
+          </div>
+        }
+      </ng-template>
+    }
+  `,
+})
+export class AlertaPanelComponent {
+  @Input() open = false;
+  @Input() alertas: AlertasPrazo = { atrasados: [], semana: [], janela: [], total: 0 };
+  @Input() clientes: Cliente[] = [];
+  @Input() hoje = new Date();
+  @Output() onClose = new EventEmitter<void>();
+  @Output() onSelect = new EventEmitter<Prazo>();
+  @Output() onSimularEmail = new EventEmitter<void>();
+
+  nomeCliente(clienteId: number): string {
+    return this.clientes.find((cliente) => cliente.id === clienteId)?.razaoSocial ?? '—';
+  }
+
+  estaAtrasado(prazo: Prazo, hoje: Date): boolean {
+    return estaAtrasado(prazo, hoje);
+  }
+}

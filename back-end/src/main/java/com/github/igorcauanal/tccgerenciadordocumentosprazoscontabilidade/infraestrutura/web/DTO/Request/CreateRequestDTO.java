@@ -8,6 +8,8 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 
+import java.util.List;
+
 @Getter
 public class CreateRequestDTO {
 
@@ -15,6 +17,6 @@ public class CreateRequestDTO {
     private String title;
     private String competence;
     private LocalDate deadline;
-    private List<C> checklist;
+    private List<ChecklistItemRequestDTO> checklist;
 
 }

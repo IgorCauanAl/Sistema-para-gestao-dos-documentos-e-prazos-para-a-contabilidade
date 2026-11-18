@@ -1,6 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Customer;
 
-import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.modelo.Customer.Customer;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Customer.Customer;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.entity.CustomerEntity;
 
 
@@ -8,23 +8,22 @@ public final class CustomerMapper {
 
     private CustomerMapper(){}
 
-    public static CustomerEntity toEntity(Customer cliente){
+    public static CustomerEntity toEntity(Customer customer){
 
-        if(cliente == null ){
+        if(customer == null ){
             return null;
         }
 
         CustomerEntity entity = new CustomerEntity();
 
-        entity.setId(cliente.getId());
-        entity.setCnpj(cliente.getCnpj());
-        entity.setEmail(cliente.getEmail());
-        entity.setEnderecoCompleto(cliente.getEnderecoCompleto());
-        entity.setRazaoSocial(cliente.getRazaoSocial());
-        entity.setResponsavel(cliente.getResponsavel());
-        entity.setStatusPendencia(cliente.getStatusPendencia());
-        entity.setUltimoEnvioEm(cliente.getUltimoEnvioEm());
-
+        entity.setId(customer.getId());
+        entity.setCnpj(customer.getCnpj());
+        entity.setEmail(customer.getEmail());
+        entity.setFullAddress(customer.getFullAddress());
+        entity.setCorporateName(customer.getLegalName());
+        entity.setResponsible(customer.getResponsibleName());
+        entity.setPendingStatus(customer.getPendingStatus());
+        entity.setLastPostedOn(customer.getLastSubmissionAt());
 
         return entity;
     }
@@ -35,15 +34,15 @@ public final class CustomerMapper {
             return null;
         }
 
-        return new Customer(
+        return Customer.reconstitute(
                 entity.getId(),
                 entity.getCnpj(),
-                entity.getRazaoSocial(),
-                entity.getResponsavel(),
+                entity.getCorporateName(),
+                entity.getResponsible(),
                 entity.getEmail(),
-                entity.getEnderecoCompleto(),
-                entity.getStatusPendencia(),
-                entity.getUltimoEnvioEm()
+                entity.getFullAddress(),
+                entity.getPendingStatus(),
+                entity.getLastPostedOn()
         );
 
     }
