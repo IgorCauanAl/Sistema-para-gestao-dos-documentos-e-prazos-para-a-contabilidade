@@ -13,6 +13,8 @@ public class RequestListItemReadModel {
     private String competence;
     private LocalDate dueDate;
     private RequestStatus status;
+    private long acceptedItems;
+    private int totalItems;
     private BigDecimal progress;
 
     public RequestListItemReadModel(Long id,
@@ -21,6 +23,8 @@ public class RequestListItemReadModel {
                                     String competence,
                                     LocalDate dueDate,
                                     RequestStatus status,
+                                    long acceptedItems,
+                                    int totalItems,
                                     BigDecimal progress) {
         this.id = id;
         this.customerId = customerId;
@@ -28,6 +32,8 @@ public class RequestListItemReadModel {
         this.competence = competence;
         this.dueDate = dueDate;
         this.status = status;
+        this.acceptedItems = acceptedItems;
+        this.totalItems = totalItems;
         this.progress = progress;
     }
 
@@ -53,6 +59,14 @@ public class RequestListItemReadModel {
 
     public RequestStatus getStatus() {
         return status;
+    }
+
+    public long getAcceptedItems() {
+        return acceptedItems;
+    }
+
+    public int getTotalItems() {
+        return totalItems;
     }
 
     public BigDecimal getProgress() {

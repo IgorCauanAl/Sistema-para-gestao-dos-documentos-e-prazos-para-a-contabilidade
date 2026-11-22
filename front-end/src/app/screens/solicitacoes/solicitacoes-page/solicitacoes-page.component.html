@@ -1,0 +1,79 @@
+
+    <div class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800">Solicitações</h1>
+          <p class="text-sm text-slate-500 mt-1">
+            Pedidos de documentos enviados aos clientes e seus links de envio.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="novaOpen = true"
+          class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors"
+        >
+          <svg lucidePlus [size]="16"></svg> Nova solicitação
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <app-summary-card title="Total de solicitações" [value]="total.toString()" icon="clipboardList"></app-summary-card>
+        <app-summary-card title="Abertas" [value]="contagem(StatusSolicitacao.ABERTA).toString()" icon="inbox"></app-summary-card>
+        <app-summary-card
+          title="Em conferência"
+          [value]="contagem(StatusSolicitacao.EM_CONFERENCIA).toString()"
+          icon="send"
+          colorTheme="warning"
+        ></app-summary-card>
+        <app-summary-card
+          title="Concluídas"
+          [value]="contagem(StatusSolicitacao.CONCLUIDA).toString()"
+          icon="checkCircle2"
+          colorTheme="success"
+        ></app-summary-card>
+      </div>
+
+      @if (total > 0) {
+        <app-solicitacao-filters
+          [filters]="filters"
+          [clientes]="clientes"
+          (filtersChange)="filters = $event"
+        ></app-solicitacao-filters>
+      }
+
+      @if (total === 0) {
+        <app-empty-state
+          title="Nenhuma solicitação criada"
+          subtitle="Clique em “+ Nova solicitação” para pedir os primeiros documentos a um cliente."
+        ></app-empty-state>
+      } @else if (filtradas.length === 0) {
+        <app-empty-state
+          title="Nenhuma solicitação encontrada"
+          subtitle="Ajuste os filtros para encontrar a solicitação desejada."
+        ></app-empty-state>
+      } @else {
+        <app-solicitacao-table
+          [solicitacoes]="filtradas"
+          [nomeCliente]="nomeClienteFn"
+          (onOpen)="abrir($event)"
+        ></app-solicitacao-table>
+      }
+
+      <app-nova-solicitacao-modal
+        [open]="novaOpen"
+        [clientes]="clientes"
+        [clienteInicial]="null"
+        (onClose)="novaOpen = false"
+        (onSubmit)="handleCreate($event)"
+      ></app-nova-solicitacao-modal>
+
+      <app-link-generated-modal
+        [open]="!!linkModal"
+        [solicitacao]="linkModal"
+        [cliente]="clienteDoLink"
+        (onClose)="linkModal = null"
+        (onToast)="handleToast($event)"
+      ></app-link-generated-modal>
+
+    </div>
+  

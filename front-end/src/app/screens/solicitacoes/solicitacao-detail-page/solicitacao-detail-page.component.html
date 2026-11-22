@@ -1,0 +1,128 @@
+
+    @if (sol) {
+      <div class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+        <a
+          routerLink="/solicitacoes"
+          class="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-700 transition-colors"
+        >
+          <svg lucideArrowLeft [size]="16"></svg> Solicitações
+        </a>
+
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-2xl font-bold text-slate-800">{{ sol.titulo }}</h1>
+              <app-status-badge [meta]="statusMeta"></app-status-badge>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">
+              {{ cliente?.razaoSocial ?? '—' }} · competência {{ sol.competencia }} · prazo {{ sol.prazo }} ·
+              criada em {{ sol.criadoEm.data }} às {{ sol.criadoEm.hora }}
+            </p>
+          </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-5 space-y-3">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <p class="text-sm font-semibold text-slate-700">Progresso da conferência</p>
+                <span class="text-sm font-medium text-slate-500">{{ progresso.label }}</span>
+              </div>
+              <app-progress-bar
+                [pct]="progresso.pct"
+                [tone]="progresso.pct === 100 ? 'green' : 'indigo'"
+              ></app-progress-bar>
+              <p class="flex items-start gap-2 text-xs text-slate-400">
+                <svg lucideInfo [size]="14" class="shrink-0 mt-0.5"></svg>
+                O status da solicitação é calculado automaticamente a partir dos itens: todos
+                aprovados = concluída; algum enviado = em conferência; caso contrário, aberta.
+              </p>
+            </div>
+
+            @for (item of sol.itens; track item.id) {
+              <app-solicitacao-item-card
+                [item]="item"
+                (onApprove)="approveItem = $event"
+                (onReject)="rejectItem = $event"
+                (onManualReceipt)="manualItem = $event"
+                (onViewFile)="abrirArquivo($event)"
+                (onDownload)="baixarArquivo($event)"
+              ></app-solicitacao-item-card>
+            }
+          </div>
+
+          <aside class="bg-white rounded-3xl shadow-sm border border-slate-200/50 p-5 space-y-5 lg:sticky lg:top-4">
+            @if (sol.token) {
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Link da solicitação
+                </p>
+                <p class="text-xs font-mono text-indigo-600 break-all">
+                  contadash.app/s/{{ sol.token }}
+                </p>
+                <p class="text-xs text-slate-400 mt-2">Validade: {{ sol.validadeAte }}</p>
+              </div>
+            }
+
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-400">Canal</dt>
+                <dd class="font-medium text-slate-700">{{ sol.canal }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-400">Prazo</dt>
+                <dd class="font-medium text-slate-700">{{ sol.prazo }}</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-slate-400">Itens</dt>
+                <dd class="font-medium text-slate-700">{{ sol.itens.length }}</dd>
+              </div>
+            </dl>
+
+            @if (sol.instrucoes) {
+              <div class="pt-2 border-t border-slate-100">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                  Instruções ao cliente
+                </p>
+                <p class="text-sm text-slate-600 leading-relaxed">{{ sol.instrucoes }}</p>
+              </div>
+            }
+          </aside>
+        </div>
+
+        <app-reject-item-modal
+          [open]="!!rejectItem"
+          [solicitacao]="sol"
+          [cliente]="cliente"
+          [item]="rejectItem"
+          (onClose)="rejectItem = null"
+          (onConfirm)="handleRejectConfirm($event)"
+        ></app-reject-item-modal>
+
+        <app-approve-item-modal
+          [open]="!!approveItem"
+          [solicitacao]="sol"
+          [item]="approveItem"
+          (onClose)="approveItem = null"
+          (onConfirm)="handleApproveConfirm()"
+        ></app-approve-item-modal>
+
+        <app-manual-receipt-modal
+          [open]="!!manualItem"
+          [item]="manualItem"
+          (onClose)="manualItem = null"
+          (onConfirm)="handleManualConfirm($event)"
+        ></app-manual-receipt-modal>
+
+        <app-document-viewer
+          [open]="!!viewerDoc"
+          [documento]="viewerDoc"
+          [versions]="viewerVersions"
+          [showActions]="false"
+          (onSelectVersion)="selecionarVersao($event)"
+          (onClose)="viewerDoc = null"
+        ></app-document-viewer>
+      </div>
+    }
+  

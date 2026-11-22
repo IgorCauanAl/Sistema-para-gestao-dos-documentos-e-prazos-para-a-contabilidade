@@ -55,6 +55,9 @@ public class DocumentEntity {
     @Column(name = "storage_path", nullable = false, length = 500)
     private String storagePath;
 
+    @Column(name = "verified", nullable = false)
+    private boolean verified;
+
     @Column(name = "created_in", nullable = false)
     private LocalDateTime createdIn;
 }

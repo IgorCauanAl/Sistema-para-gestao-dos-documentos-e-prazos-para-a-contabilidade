@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 
-export type ToastType = 'success' | 'info';
+export type ToastType = 'success' | 'info' | 'error';
 
 export interface Toast {
   id: number;

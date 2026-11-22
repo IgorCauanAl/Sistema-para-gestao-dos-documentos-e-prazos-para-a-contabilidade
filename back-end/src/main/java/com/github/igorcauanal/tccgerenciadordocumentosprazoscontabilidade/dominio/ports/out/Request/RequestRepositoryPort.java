@@ -11,6 +11,8 @@ public interface RequestRepositoryPort {
 
     Optional<Request> findById(Long id);
 
+    Optional<Request> findByPublicTokenHash(String publicTokenHash);
+
     List<Request> findByCustomerId(Long customerId);
 
 }

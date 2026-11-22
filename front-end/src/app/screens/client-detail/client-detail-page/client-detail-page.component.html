@@ -1,0 +1,134 @@
+
+    @if (client) {
+      <div class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+        <app-client-profile-header
+          [client]="client"
+          (onEdit)="editOpen = true"
+          (onAttach)="openAttach()"
+        ></app-client-profile-header>
+
+        <app-detail-tabs [activeTab]="tab" (onChange)="tab = $event"></app-detail-tabs>
+
+        @if (tab === 'Documentos') {
+          <div class="space-y-6">
+            <app-document-filters
+              [filters]="filters"
+              (onChange)="filters = $event"
+            ></app-document-filters>
+
+            @if (filteredDocs.length > 0) {
+              <app-document-table
+                [documents]="filteredDocs"
+                (onView)="openViewer($event)"
+                (onSend)="handleSend($event)"
+              ></app-document-table>
+            } @else if (hasAnyDoc) {
+              <app-empty-state
+                title="Nenhum document encontrado"
+                subtitle="Ajuste os filtros para encontrar o document desejado."
+              ></app-empty-state>
+            } @else {
+              <app-empty-state
+                title="Nenhum document anexado para este cliente"
+                subtitle="Clique em “+ Anexar document” para enviar o primeiro arquivo."
+              ></app-empty-state>
+            }
+          </div>
+        }
+
+        @if (tab === 'Solicitações') {
+          <div class="space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <p class="text-sm text-slate-500">
+                @if (clientSols.length === 0) {
+                  Nenhuma solicitação para este cliente.
+                } @else {
+                  {{ clientSols.length }} solicitação(ões) para este cliente.
+                }
+              </p>
+              <button
+                type="button"
+                (click)="novaSolOpen = true"
+                class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors"
+              >
+                <svg lucidePlus [size]="16"></svg> Nova solicitação
+              </button>
+            </div>
+
+            @if (clientSols.length > 0) {
+              <app-solicitacao-filters
+                [filters]="solFilters"
+                [clientes]="[]"
+                [showCliente]="false"
+                (filtersChange)="solFilters = $event"
+              ></app-solicitacao-filters>
+            }
+
+            @if (clientSols.length === 0) {
+              <app-empty-state
+                title="Nenhuma solicitação criada"
+                subtitle="Clique em “+ Nova solicitação” para pedir documentos ao cliente."
+              ></app-empty-state>
+            } @else if (filteredSols.length === 0) {
+              <app-empty-state
+                title="Nenhuma solicitação encontrada"
+                subtitle="Ajuste os filtros para encontrar a solicitação desejada."
+              ></app-empty-state>
+            } @else {
+              <app-solicitacao-table
+                [solicitacoes]="filteredSols"
+                [nomeCliente]="nomeClienteFn"
+                [showCliente]="false"
+                (onOpen)="abrirSolicitacao($event)"
+              ></app-solicitacao-table>
+            }
+          </div>
+        }
+
+        @if (tab !== 'Documentos' && tab !== 'Solicitações') {
+          <app-empty-state
+            [title]="tab + ' — em breve'"
+            subtitle="Este módulo estará disponível em breve."
+          ></app-empty-state>
+        }
+
+        <app-nova-solicitacao-modal
+          [open]="novaSolOpen"
+          [clientes]="client ? [client] : []"
+          [clienteInicial]="client"
+          (onClose)="novaSolOpen = false"
+          (onSubmit)="handleNovaSolicitacao($event)"
+        ></app-nova-solicitacao-modal>
+
+
+        <app-attach-document-modal
+          [open]="attachOpen"
+          [client]="client"
+          [prefill]="attachPrefill"
+          (onClose)="closeAttach()"
+          (onSubmit)="handleAttach($event)"
+        ></app-attach-document-modal>
+
+        <app-document-viewer
+          [open]="viewerOpen"
+          [documento]="viewedDoc"
+          [versions]="versions"
+          (onSelectVersion)="refreshViewed($event.id)"
+          (onClose)="closeViewer()"
+          (onResend)="handleSend(viewedDoc)"
+          (onNewVersion)="handleNewVersion()"
+          (onDownload)="handleDownload()"
+          (onReceipt)="toastService.show('Recurso visual: comprovante em breve.', 'info')"
+        ></app-document-viewer>
+
+        <app-client-form-modal
+          [open]="editOpen"
+          title="Editar Cliente"
+          [formData]="formData"
+          (formDataChange)="formData = $event"
+          (onClose)="editOpen = false"
+          (onSubmit)="handleEditSubmit()"
+        ></app-client-form-modal>
+      </div>
+    }
+  

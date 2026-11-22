@@ -1,0 +1,160 @@
+    @if (open) {
+      <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div
+          class="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+        >
+          <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
+            <h2 class="text-xl font-bold text-slate-800">{{ title }}</h2>
+            <button
+              type="button"
+              (click)="onClose.emit()"
+              [disabled]="saving"
+              class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors disabled:opacity-50"
+              aria-label="Fechar formulário de cliente"
+            >
+              <svg lucideX [size]="20"></svg>
+            </button>
+          </div>
+
+          <div class="p-6 overflow-y-auto bg-slate-50/50">
+            <form id="clientForm" (submit)="submit($event)" class="space-y-5" novalidate>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="col-span-1">
+                  <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="cliente-cnpj">CNPJ</label>
+                  <div class="relative">
+                    <svg
+                      lucideFileText
+                      [size]="18"
+                      class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                    ></svg>
+                    <input
+                      id="cliente-cnpj"
+                      type="text"
+                      name="cnpj"
+                      required
+                      inputmode="numeric"
+                      autocomplete="off"
+                      maxlength="18"
+                      placeholder="00.000.000/0000-00"
+                      [value]="formData.cnpj"
+                      (input)="update('cnpj', $event)"
+                      [attr.aria-invalid]="erroCnpj ? 'true' : null"
+                      aria-describedby="cliente-cnpj-erro"
+                      class="w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      [class.border-red-300]="erroCnpj"
+                      [class.border-slate-200]="!erroCnpj"
+                    />
+                  </div>
+                  @if (erroCnpj) {
+                    <p id="cliente-cnpj-erro" class="mt-1.5 text-xs text-red-600" role="alert">{{ erroCnpj }}</p>
+                  }
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="cliente-razao">Razão Social</label>
+                  <div class="relative">
+                    <svg
+                      lucideBuilding2
+                      [size]="18"
+                      class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                    ></svg>
+                    <input
+                      id="cliente-razao"
+                      type="text"
+                      name="razaoSocial"
+                      required
+                      placeholder="Nome da Empresa LTDA"
+                      [value]="formData.razaoSocial"
+                      (input)="update('razaoSocial', $event)"
+                      class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="cliente-responsavel">Responsável</label>
+                  <div class="relative">
+                    <svg
+                      lucideUser
+                      [size]="18"
+                      class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                    ></svg>
+                    <input
+                      id="cliente-responsavel"
+                      type="text"
+                      name="responsavel"
+                      required
+                      placeholder="Nome do contato principal"
+                      [value]="formData.responsavel"
+                      (input)="update('responsavel', $event)"
+                      class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="cliente-email">E-mail corporativo</label>
+                  <div class="relative">
+                    <svg
+                      lucideMail
+                      [size]="18"
+                      class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                    ></svg>
+                    <input
+                      id="cliente-email"
+                      type="email"
+                      name="email"
+                      required
+                      placeholder="contato@empresa.com.br"
+                      [value]="formData.email"
+                      (input)="update('email', $event)"
+                      class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="cliente-endereco">Endereço Completo</label>
+                <div class="relative">
+                  <svg
+                    lucideMapPin
+                    [size]="18"
+                    class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"
+                  ></svg>
+                  <input
+                    id="cliente-endereco"
+                    type="text"
+                    name="endereco"
+                    required
+                    placeholder="Logradouro, Número, Bairro, Cidade - UF"
+                    [value]="formData.endereco"
+                    (input)="update('endereco', $event)"
+                    class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <div class="px-6 py-4 border-t border-slate-100 bg-white flex justify-end gap-3">
+            <button
+              type="button"
+              (click)="onClose.emit()"
+              [disabled]="saving"
+              class="px-5 py-2.5 rounded-full text-slate-600 hover:bg-slate-100 transition-colors text-sm font-medium disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="clientForm"
+              [disabled]="saving"
+              class="px-6 py-2.5 rounded-full text-white font-medium hover:opacity-90 transition-opacity bg-[#15803D] text-sm flex items-center gap-2 disabled:opacity-60"
+            >
+              {{ saving ? 'Salvando...' : 'Salvar Cliente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }

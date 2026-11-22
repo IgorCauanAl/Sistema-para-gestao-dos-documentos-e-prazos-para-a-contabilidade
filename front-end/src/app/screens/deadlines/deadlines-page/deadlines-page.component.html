@@ -1,0 +1,99 @@
+
+    @if (prazos) {
+      <div class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-800">Prazos</h1>
+          <p class="text-sm text-slate-500 mt-1">Acompanhe vencimentos e entregas do escritório</p>
+        </div>
+
+        <app-prazo-summary-cards
+          [contagens]="contagens"
+          [ativo]="cardAtivo"
+          (onClick)="setCardAtivo($event)"
+        ></app-prazo-summary-cards>
+
+        <app-prazo-filters
+          [filters]="filters"
+          [clientes]="clientes"
+          [opcoesObrigacao]="opcoesObrigacao"
+          (filtersChange)="filters = $event"
+          (onClear)="filters = emptyFilters()"
+        ></app-prazo-filters>
+
+        @if (listaExibida.length === 0) {
+          <app-empty-state
+            title="Nenhum deadline encontrado com esses filtros"
+            subtitle="Ajuste a busca, o cliente, a categoria ou o status para encontrar o deadline desejado."
+          ></app-empty-state>
+        } @else {
+          <div class="space-y-4">
+            <app-prazo-table
+              [prazos]="paginada"
+              [nomeCliente]="nomeClienteFn"
+              [hoje]="hoje"
+              (onView)="abrirDetalhe($event)"
+              (onEntregar)="entregarSolicitado = $event"
+            ></app-prazo-table>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+              <p>
+                Mostrando {{ (paginaAtual - 1) * PAGE_SIZE + 1 }}–{{
+                  Math.min(paginaAtual * PAGE_SIZE, listaExibida.length)
+                }}
+                de {{ listaExibida.length }} deadline{{ listaExibida.length > 1 ? 's' : '' }}
+              </p>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Página anterior"
+                  [disabled]="paginaAtual <= 1"
+                  (click)="page = paginaAtual - 1"
+                  class="px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  aria-label="Próxima página"
+                  [disabled]="paginaAtual >= totalPaginas"
+                  (click)="page = paginaAtual + 1"
+                  class="px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        <app-prazo-detail-panel
+          [open]="!!prazoDetalhe"
+          [deadline]="prazoDetalhe"
+          [cliente]="clienteDetalhe"
+          [hoje]="hoje"
+          (onClose)="fecharDetalhe()"
+          (onMarcarEntregue)="entregarSolicitado = prazoDetalhe"
+          (onAnexarGuia)="anexarOpen = true"
+        ></app-prazo-detail-panel>
+
+        <app-attach-document-modal
+          [open]="anexarOpen"
+          [client]="clienteDetalhe"
+          [prefill]="prefillAnexo"
+          (onClose)="anexarOpen = false"
+          (onSubmit)="handleAnexarGuia($event)"
+        ></app-attach-document-modal>
+
+        <app-confirm-dialog
+          [open]="!!entregarSolicitado"
+          (onClose)="cancelarEntrega()"
+          (onConfirm)="handleMarcarEntregue()"
+          title="Marcar deadline como entregue"
+          [message]="mensagemEntrega"
+          confirmLabel="Marcar como entregue"
+          cancelLabel="Voltar"
+          [loading]="entregando"
+          [danger]="false"
+        ></app-confirm-dialog>
+      </div>
+    }

@@ -1,7 +1,7 @@
 import { formatarData, paraData } from './data';
 import type { Prazo } from './models';
 
-export const HOJE = new Date(2026, 9, 8);
+export const HOJE = new Date();
 
 export const Categoria = {
   FISCAL: 'Fiscal',
@@ -32,6 +32,7 @@ export const StatusPrazo = {
   EM_ANDAMENTO: 'EM_ANDAMENTO',
   AGUARDANDO_CLIENTE: 'AGUARDANDO_CLIENTE',
   ENTREGUE: 'ENTREGUE',
+  CANCELADO: 'CANCELADO',
 } as const;
 
 export type StatusMeta = { label: string; badge: string };
@@ -44,6 +45,7 @@ export const statusPrazoMeta: Record<string, StatusMeta> = {
     badge: 'bg-amber-100 text-amber-700 border-amber-200',
   },
   [StatusPrazo.ENTREGUE]: { label: 'Entregue', badge: 'bg-green-100 text-green-700 border-green-200' },
+  [StatusPrazo.CANCELADO]: { label: 'Cancelado', badge: 'bg-slate-100 text-slate-500 border-slate-200' },
 };
 
 export const STATUS_PRAZO_OPCOES = [
@@ -51,6 +53,7 @@ export const STATUS_PRAZO_OPCOES = [
   StatusPrazo.EM_ANDAMENTO,
   StatusPrazo.AGUARDANDO_CLIENTE,
   StatusPrazo.ENTREGUE,
+  StatusPrazo.CANCELADO,
 ];
 
 export const Prioridade = {
@@ -66,22 +69,6 @@ export const prioridadeMeta: Record<string, StatusMeta> = {
 };
 
 export const PRIORIDADE_OPCOES = [Prioridade.ALTA, Prioridade.MEDIA, Prioridade.BAIXA];
-
-export const MotivoReprogramacao = {
-  RECALCULO_GUIA: 'RECALCULO_GUIA',
-  FALTA_RECURSO_CLIENTE: 'FALTA_RECURSO_CLIENTE',
-  ALTERACAO_DOCUMENTO: 'ALTERACAO_DOCUMENTO',
-  OUTRO: 'OUTRO',
-} as const;
-
-export const motivoReprogramacaoLabel: Record<string, string> = {
-  [MotivoReprogramacao.RECALCULO_GUIA]: 'Recálculo de guia',
-  [MotivoReprogramacao.FALTA_RECURSO_CLIENTE]: 'Falta de recurso do cliente',
-  [MotivoReprogramacao.ALTERACAO_DOCUMENTO]: 'Alteração de documento',
-  [MotivoReprogramacao.OUTRO]: 'Outro',
-};
-
-export const MOTIVOS_REPROGRAMACAO_OPCOES = Object.values(MotivoReprogramacao);
 
 export const ETAPAS_PADRAO = [
   'Receber dados',
@@ -230,8 +217,12 @@ export const diasRestantes = (prazo: Prazo | null | undefined, hoje: Date = HOJE
   return diasEntre(vencimento, hoje);
 };
 
+export const prazoEncerrado = (prazo: Prazo | null | undefined): boolean =>
+  prazo?.status === StatusPrazo.ENTREGUE || prazo?.status === StatusPrazo.CANCELADO;
+
 export const estaAtrasado = (prazo: Prazo | null | undefined, hoje: Date = HOJE): boolean => {
-  if (!prazo || prazo.status === StatusPrazo.ENTREGUE) return false;
+  if (!prazo || prazoEncerrado(prazo)) return false;
+  if (prazo.overdue !== undefined) return prazo.overdue;
   const dias = diasRestantes(prazo, hoje);
   return dias !== null && dias < 0;
 };
@@ -246,12 +237,12 @@ export const calcularPrioridade = (vencimento: string | Date | null | undefined,
 };
 
 export const prioridadeEfetiva = (prazo: Prazo | null | undefined, hoje: Date = HOJE): string =>
-  prazo?.prioridadeManual ? prazo.prioridade : calcularPrioridade(prazo?.vencimentoAtual, hoje);
+  prazo?.prioridade || calcularPrioridade(prazo?.vencimentoAtual, hoje);
 
 export const textoRelativoVencimento = (prazo: Prazo, hoje: Date = HOJE): string => {
   const dias = diasRestantes(prazo, hoje);
   if (dias === null) return '';
-  if (prazo.status === StatusPrazo.ENTREGUE) return 'entregue';
+  if (prazoEncerrado(prazo)) return prazo.status === StatusPrazo.CANCELADO ? 'cancelado' : 'entregue';
   if (dias < 0) {
     const n = Math.abs(dias);
     return `atrasado há ${n} ${n === 1 ? 'dia' : 'dias'}`;
@@ -290,7 +281,7 @@ export const agruparPorSemana = (prazos: Prazo[], hoje: Date = HOJE, quantidadeS
 
 export const etapaAtualLabel = (prazo: Prazo | null | undefined): string => {
   const etapas = modeloPorId(prazo?.modeloId ?? '')?.etapas ?? ETAPAS_PADRAO;
-  if (prazo?.status === StatusPrazo.ENTREGUE) return 'Concluído';
+  if (prazoEncerrado(prazo)) return prazo?.status === StatusPrazo.CANCELADO ? 'Cancelado' : 'Concluído';
   const indice = prazo?.etapaAtual ?? 0;
   return etapas[indice] ?? etapas[etapas.length - 1];
 };

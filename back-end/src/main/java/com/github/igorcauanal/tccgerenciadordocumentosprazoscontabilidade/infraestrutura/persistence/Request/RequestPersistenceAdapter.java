@@ -34,6 +34,13 @@ public class RequestPersistenceAdapter implements RequestRepositoryPort {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Request> findByPublicTokenHash(String publicTokenHash) {
+        return requestRepository.findByPublicTokenHash(publicTokenHash)
+                .map(RequestMapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Request> findByCustomerId(Long customerId) {
         return requestRepository.findByCustomerId(customerId)   // ← bug corrigido
                 .stream()

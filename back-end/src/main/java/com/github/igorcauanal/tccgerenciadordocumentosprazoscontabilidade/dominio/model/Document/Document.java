@@ -21,6 +21,7 @@ public class Document {
     private FileFormat fileFormat;
     private String fileName;
     private String storagePath;
+    private boolean verified;
     private LocalDateTime createdIn;
 
     private Document() {
@@ -77,6 +78,8 @@ public class Document {
         d.fileName = fileName;
         d.storagePath = storagePath;
         d.status = StatusDocument.CRIADO;
+        // Todo arquivo aceito pelo upload passou pelas validações de MIME/extensão/tamanho.
+        d.verified = true;
         d.createdIn = LocalDateTime.now();
         return d;
     }
@@ -93,6 +96,7 @@ public class Document {
                                      FileFormat fileFormat,
                                      String fileName,
                                      String storagePath,
+                                     boolean verified,
                                      LocalDateTime createdIn) {
         Document d = new Document();
         d.id = id;
@@ -106,6 +110,7 @@ public class Document {
         d.fileFormat = fileFormat;
         d.fileName = fileName;
         d.storagePath = storagePath;
+        d.verified = verified;
         d.createdIn = createdIn;
         return d;
     }
@@ -126,7 +131,21 @@ public class Document {
             throw new BusinessException(
                     "Só é possível enviar documento com status Criado. Atual: " + status);
         }
-        this.status = StatusDocument.CRIADO.ENVIADO;
+        this.status = StatusDocument.ENVIADO;
+    }
+
+    /** Reenvio: mantém o ciclo Criado -> Enviado -> Visualizado -> Baixado, mas permite voltar a Enviado. */
+    public void resend() {
+        if (status == StatusDocument.CRIADO) {
+            markAsSent();
+            return;
+        }
+        if (status != StatusDocument.ENVIADO
+                && status != StatusDocument.VISUALIZADO
+                && status != StatusDocument.BAIXADO) {
+            throw new BusinessException("Não é possível reenviar documento com status: " + status);
+        }
+        this.status = StatusDocument.ENVIADO;
     }
 
     public void markAsViewed() {
@@ -158,5 +177,6 @@ public class Document {
     public FileFormat getFileFormat() { return fileFormat; }
     public String getFileName() { return fileName; }
     public String getStoragePath() { return storagePath; }
+    public boolean isVerified() { return verified; }
     public LocalDateTime getCreatedIn() { return createdIn; }
 }

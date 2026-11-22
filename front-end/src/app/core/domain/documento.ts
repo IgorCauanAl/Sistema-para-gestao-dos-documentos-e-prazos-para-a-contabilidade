@@ -2,6 +2,7 @@ import { diasDesde, paraData } from './data';
 import type { Documento } from './models';
 
 export const DocumentStatus = {
+  CRIADO: 'CRIADO',
   RASCUNHO: 'RASCUNHO',
   ENVIADO: 'ENVIADO',
   VISUALIZADO: 'VISUALIZADO',
@@ -14,6 +15,7 @@ export const DocumentStatus = {
 export type StatusMeta = { label: string; badge: string };
 
 export const documentStatusMeta: Record<string, StatusMeta> = {
+  [DocumentStatus.CRIADO]: { label: 'Criado', badge: 'bg-slate-100 text-slate-600 border-slate-200' },
   [DocumentStatus.RASCUNHO]: { label: 'Rascunho', badge: 'bg-slate-100 text-slate-600 border-slate-200' },
   [DocumentStatus.ENVIADO]: { label: 'Enviado', badge: 'bg-blue-100 text-blue-700 border-blue-200' },
   [DocumentStatus.VISUALIZADO]: { label: 'Visualizado', badge: 'bg-amber-100 text-amber-700 border-amber-200' },
@@ -38,6 +40,7 @@ export const CANAIS_DOCUMENTO = ['Link', 'WhatsApp', 'E-mail', 'Manual'] as cons
 export const CANAIS_ORIGEM_RECEBIMENTO = ['WhatsApp', 'E-mail', 'Outro'] as const;
 
 export const STATUS_DOCUMENTO_FILTROS = [
+  DocumentStatus.CRIADO,
   DocumentStatus.RASCUNHO,
   DocumentStatus.ENVIADO,
   DocumentStatus.VISUALIZADO,

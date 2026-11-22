@@ -1,105 +1,54 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 
-import type {
-  DashboardClientProfile,
-  DashboardDocumentType,
-  DashboardFlow,
-  DashboardObligations,
-  DashboardSummaryCard,
-  DashboardWeekly,
-} from '../domain/models';
+import type { DashboardCharts, DashboardSummaryCard } from '../domain/models';
+
+/** Resposta do endpoint real GET /dashboard/summary. */
+export interface DashboardSummaryResponse {
+  totalCustomers: number;
+  pendingDocuments: number;
+  overdueObligations: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
+  private readonly http = inject(HttpClient);
+
+  async getSummary(): Promise<DashboardSummaryResponse> {
+    return firstValueFrom(this.http.get<DashboardSummaryResponse>('/dashboard/summary'));
+  }
+
+  /** Séries agregadas no back-end para os gráficos da visão geral. */
+  async getCharts(): Promise<DashboardCharts> {
+    return firstValueFrom(this.http.get<DashboardCharts>('/dashboard/charts'));
+  }
+
+  /** Indicadores exigidos pelo RF02, montados somente com dados vindos da API. */
   async getSummaryCards(): Promise<DashboardSummaryCard[]> {
+    const summary = await this.getSummary();
+
     return [
       {
         title: 'Total de Clientes',
-        value: '312',
-        trend: '12%',
-        trendUp: true,
-        subtext: 'vs mês passado',
+        value: String(summary.totalCustomers),
+        subtext: 'cadastrados',
         icon: 'users',
       },
       {
         title: 'Docs. Pendentes',
-        value: '87',
-        trend: '24%',
-        trendUp: false,
-        subtext: 'aguardando cliente',
+        value: String(summary.pendingDocuments),
+        subtext: 'aguardando ação/envio do cliente',
         icon: 'fileWarning',
         colorTheme: 'warning',
       },
       {
         title: 'Obrigações Atrasadas',
-        value: '12',
-        trend: '5%',
-        trendUp: false,
+        value: String(summary.overdueObligations),
         subtext: 'revisão imediata',
         icon: 'clockAlert',
         colorTheme: 'danger',
       },
-      {
-        title: 'Entregas Concluídas',
-        value: '64',
-        trend: '16%',
-        trendUp: true,
-        subtext: 'vs mês passado',
-        icon: 'checkCircle2',
-        colorTheme: 'success',
-      },
     ];
-  }
-
-  async getDocumentFlow(): Promise<DashboardFlow> {
-    return {
-      sent: '1,248',
-      received: '3,892',
-      tooltip: {
-        date: 'Out 12, 2026',
-        received: '482',
-        sent: '124',
-      },
-      months: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out'],
-    };
-  }
-
-  async getObligationsStatus(): Promise<DashboardObligations> {
-    return {
-      newRequests: 45,
-      blocks: [
-        { label: 'Pendentes', value: '142', className: 'bg-indigo-600' },
-        { label: 'Preparando', value: '84', className: 'bg-indigo-400' },
-        { label: 'Aguardando\nCliente', value: '36', className: 'bg-purple-400' },
-        { label: 'Concluídas', value: '420', className: 'bg-[#15803D]' },
-      ],
-    };
-  }
-
-  async getClientProfile(): Promise<DashboardClientProfile[]> {
-    return [
-      { type: 'Comércio Varejista', count: 145, pct: '46%', color: 'bg-indigo-500' },
-      { type: 'Prestadores de Serviço', count: 98, pct: '31%', color: 'bg-purple-400' },
-      { type: 'Indústria', count: 42, pct: '13%', color: 'bg-slate-400' },
-      { type: 'Outros', count: 27, pct: '10%', color: 'bg-slate-200' },
-    ];
-  }
-
-  async getDocumentsByType(): Promise<DashboardDocumentType[]> {
-    return [
-      { label: 'NF-e', height: '80%', val: '45%' },
-      { label: 'Folha', height: '40%', val: '20%' },
-      { label: 'Impostos', height: '90%', val: '55%', highlight: true },
-      { label: 'Extratos', height: '60%', val: '30%' },
-      { label: 'Outros', height: '30%', val: '15%' },
-    ];
-  }
-
-  async getWeeklyDeliveries(): Promise<DashboardWeekly> {
-    return {
-      total: '124',
-      trend: '12.5%',
-      days: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'],
-    };
   }
 }

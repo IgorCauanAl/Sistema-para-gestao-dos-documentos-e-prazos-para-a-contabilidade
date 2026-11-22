@@ -1,0 +1,76 @@
+name: contadash
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: contadash-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:?Defina DB_NAME no arquivo .env}
+      POSTGRES_USER: ${DB_USER:?Defina DB_USER no arquivo .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+      TZ: UTC
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    container_name: contadash-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:?Defina DB_NAME no arquivo .env}
+      DB_USER: ${DB_USER:?Defina DB_USER no arquivo .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Defina DB_PASSWORD no arquivo .env}
+      API_SECURITY_TOKEN_SECRET: ${API_SECURITY_TOKEN_SECRET:?Defina API_SECURITY_TOKEN_SECRET no arquivo .env}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      PUBLIC_DOCUMENTS_DIR: /app/storage/public-requests
+      PUBLIC_UPLOAD_MAX_BYTES: 26214400
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Administrador}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      TZ: UTC
+    volumes:
+      - documents_data:/app/storage/public-requests
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-o", "/dev/null", "http://localhost:8080/auth/login"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  frontend:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+    container_name: contadash-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-4200}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+  documents_data:

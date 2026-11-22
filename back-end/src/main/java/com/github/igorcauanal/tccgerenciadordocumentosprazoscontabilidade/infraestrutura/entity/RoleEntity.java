@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "perfis")
+@Table(name = "role")
 @Getter
 @Setter
 public class RoleEntity {

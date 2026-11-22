@@ -1,0 +1,13 @@
+import { Component, Input } from '@angular/core';
+
+@Component({
+  selector: 'app-progress-bar',
+  standalone: true,
+  templateUrl: './progress-bar.component.html',
+  styleUrl: './progress-bar.component.css',
+})
+export class ProgressBarComponent {
+  @Input() pct = 0;
+  @Input() className = '';
+  @Input() tone: 'indigo' | 'green' = 'indigo';
+}

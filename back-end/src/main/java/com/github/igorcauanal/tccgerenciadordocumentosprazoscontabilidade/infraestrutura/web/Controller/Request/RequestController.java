@@ -1,5 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.Controller.Request;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Request.ChecklistItem;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Request.CreatedRequest;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Request.Request;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.request.RequestListItemReadModel;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.readmodel.request.RequestReadModel;
@@ -48,8 +49,9 @@ public class RequestController {
             }
         }
 
-        Request saved = requestServicePort.createRequest(request);
-        RequestResponseDTO response = RequestDTOMapper.toResponseDTO(saved);
+        CreatedRequest created = requestServicePort.createRequest(request);
+        RequestResponseDTO response = RequestDTOMapper.toResponseDTO(
+                created.request(), created.publicToken());
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")

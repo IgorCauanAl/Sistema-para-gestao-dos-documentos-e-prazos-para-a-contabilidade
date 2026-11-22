@@ -76,7 +76,8 @@ export const acaoTentativaLabel: Record<string, string> = {
   [AcaoTentativa.REGISTRO_MANUAL]: 'registro manual',
 };
 
-export const FORMATOS_ESPERADOS = ['PDF', 'Imagem', 'OFX', 'XML', 'XLSX', 'CSV', 'TXT', 'Qualquer'];
+/** Formatos aceitos pelo FileFormat do back-end no upload do portal. */
+export const FORMATOS_ESPERADOS = ['PDF', 'OFX', 'XML', 'XLSX', 'CSV', 'TXT'];
 
 export const SUGESTOES_ITENS = [
   'Extrato bancário',
@@ -111,8 +112,10 @@ export const calcularStatusSolicitacao = (solicitacao: Solicitacao): string => {
 };
 
 export const progressoSolicitacao = (solicitacao: Solicitacao) => {
-  const total = (solicitacao.itens ?? []).length;
-  const aprovados = (solicitacao.itens ?? []).filter((item) => item.status === StatusItem.APROVADO).length;
+  const total = solicitacao.totalItens ?? (solicitacao.itens ?? []).length;
+  const aprovados =
+    solicitacao.aceitos ??
+    (solicitacao.itens ?? []).filter((item) => item.status === StatusItem.APROVADO).length;
 
   return {
     aprovados,

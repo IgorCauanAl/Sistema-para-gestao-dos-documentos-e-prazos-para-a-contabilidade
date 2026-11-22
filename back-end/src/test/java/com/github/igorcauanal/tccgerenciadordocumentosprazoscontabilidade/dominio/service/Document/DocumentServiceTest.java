@@ -4,6 +4,8 @@ import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domini
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.DocumentDirection;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.FileFormat;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.SendChannel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.StatusDocument;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.Deadline.DeadlineServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Document.DocumentRepositoryPort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Document.StorageDeviceArchivePort;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,9 @@ class DocumentServiceTest {
     @Mock
     private StorageDeviceArchivePort storageDeviceArchivePort;
 
+    @Mock
+    private DeadlineServicePort deadlineServicePort;
+
     @InjectMocks
     private DocumentService documentService;
 
@@ -42,7 +47,7 @@ class DocumentServiceTest {
                 null, "arquivo.pdf", 1L, "Guia", "09/2026", null,
                 SendChannel.WHATSAPP, DocumentDirection.ENVIADO_AO_CLIENTE, FileFormat.PDF
         ));
-        verifyNoInteractions(storageDeviceArchivePort, documentRepositoryPort);
+        verifyNoInteractions(storageDeviceArchivePort, documentRepositoryPort, deadlineServicePort);
     }
 
     @Test
@@ -53,7 +58,7 @@ class DocumentServiceTest {
                 stream, "   ", 1L, "Guia", "09/2026", null,
                 SendChannel.WHATSAPP, DocumentDirection.ENVIADO_AO_CLIENTE, FileFormat.PDF
         ));
-        verifyNoInteractions(storageDeviceArchivePort, documentRepositoryPort);
+        verifyNoInteractions(storageDeviceArchivePort, documentRepositoryPort, deadlineServicePort);
     }
 
     @Test
@@ -72,6 +77,38 @@ class DocumentServiceTest {
         assertEquals("storage/path.pdf", result.getStoragePath());
         verify(storageDeviceArchivePort).store(any(InputStream.class), eq("guia.pdf"), eq(1L));
         verify(documentRepositoryPort).save(any(Document.class));
+        verify(deadlineServicePort).createFromDocument(result);
+    }
+
+    @Test
+    void sendDocumentShouldMarkAsSentAndSave() {
+        Document document = Document.create(
+                1L, "Guia", "09/2026", null, SendChannel.WHATSAPP, DocumentDirection.ENVIADO_AO_CLIENTE,
+                FileFormat.PDF, "guia.pdf", "storage/path.pdf"
+        );
+        when(documentRepositoryPort.findById(1L)).thenReturn(Optional.of(document));
+        when(documentRepositoryPort.save(any(Document.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Document result = documentService.sendDocument(1L);
+
+        assertEquals(StatusDocument.ENVIADO, result.getStatus());
+        verify(documentRepositoryPort).save(document);
+    }
+
+    @Test
+    void sendDocumentShouldAllowResendingAnAlreadySentDocument() {
+        Document document = Document.create(
+                1L, "Guia", "09/2026", null, SendChannel.WHATSAPP, DocumentDirection.ENVIADO_AO_CLIENTE,
+                FileFormat.PDF, "guia.pdf", "storage/path.pdf"
+        );
+        document.markAsSent();
+        document.markAsViewed();
+        when(documentRepositoryPort.findById(1L)).thenReturn(Optional.of(document));
+        when(documentRepositoryPort.save(any(Document.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Document result = documentService.sendDocument(1L);
+
+        assertEquals(StatusDocument.ENVIADO, result.getStatus());
     }
 
     @Test
@@ -96,6 +133,7 @@ class DocumentServiceTest {
 
         assertNotNull(result);
         assertEquals(document, result.metadata());
+        assertEquals(StatusDocument.VISUALIZADO, result.metadata().getStatus());
         verify(documentRepositoryPort).save(document);
         verify(storageDeviceArchivePort).load("storage/path.pdf");
     }
@@ -115,6 +153,7 @@ class DocumentServiceTest {
 
         assertNotNull(result);
         assertEquals(document, result.metadata());
+        assertEquals(StatusDocument.BAIXADO, result.metadata().getStatus());
         verify(documentRepositoryPort).save(document);
         verify(storageDeviceArchivePort).load("storage/path.pdf");
     }

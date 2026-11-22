@@ -16,11 +16,6 @@ interface AuthenticationResponseDTO {
   token: string;
 }
 
-export const CREDENCIAIS_DEMO = {
-  email: 'contador@contadash.com.br',
-  senha: '123456',
-} as const;
-
 const STORAGE_KEY = 'contadash.usuario';
 
 @Injectable({ providedIn: 'root' })

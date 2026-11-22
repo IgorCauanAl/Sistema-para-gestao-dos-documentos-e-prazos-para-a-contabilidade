@@ -44,6 +44,7 @@ export interface Documento {
 
 export interface DocumentoNovo {
   clienteId: number;
+  file?: File;
   nome?: string;
   tipo: string;
   competencia: string;
@@ -57,6 +58,7 @@ export interface DocumentoNovo {
 
 export interface DocumentoEntrada {
   clienteId: number;
+  file?: File;
   tipo: string;
   competencia: string;
   canal: string;
@@ -92,6 +94,8 @@ export interface Prazo {
   historico: PrazoEvento[];
   solicitacaoId: number | null;
   entregueEm: DataHora | null;
+  /** Flag calculada pelo back-end com a data atual do servidor. */
+  overdue?: boolean;
 }
 
 export interface DocumentoTentativaArquivo {
@@ -111,6 +115,7 @@ export interface SolicitacaoTentativa {
   ip: string;
   protocolo: string | null;
   observacao: string | null;
+  documentId?: number | null;
   competencia?: string | null;
   vencimento?: string | null;
   diasAntecedencia?: number | null;
@@ -141,6 +146,8 @@ export interface Solicitacao {
   status: string;
   criadoEm: DataHora;
   itens: SolicitacaoItem[];
+  aceitos?: number;
+  totalItens?: number;
 }
 
 export interface SolicitacaoNova {
@@ -165,34 +172,20 @@ export interface DashboardSummaryCard {
   colorTheme?: string;
 }
 
-export interface DashboardFlow {
-  sent: string;
-  received: string;
-  tooltip: { date: string; received: string; sent: string };
-  months: string[];
-}
-
-export interface DashboardObligations {
-  newRequests: number;
-  blocks: Array<{ label: string; value: string; className: string }>;
-}
-
-export interface DashboardClientProfile {
-  type: string;
-  count: number;
-  pct: string;
-  color: string;
-}
-
-export interface DashboardDocumentType {
+export interface DashboardChartItem {
   label: string;
-  height: string;
-  val: string;
-  highlight?: boolean;
+  value: number;
 }
 
-export interface DashboardWeekly {
-  total: string;
-  trend: string;
-  days: string[];
+export interface DashboardFlowPoint {
+  label: string;
+  sent: number;
+  received: number;
+}
+
+export interface DashboardCharts {
+  documentFlow: DashboardFlowPoint[];
+  documentsByType: DashboardChartItem[];
+  clientsByPendingStatus: DashboardChartItem[];
+  obligationsByStatus: DashboardChartItem[];
 }

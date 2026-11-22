@@ -1,72 +1,108 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 
 import type { Cliente } from '../domain/models';
 
-const initialClients: Cliente[] = [
-  {
-    id: 1,
-    cnpj: '12.345.678/0001-90',
-    razaoSocial: 'Alpha Tecnologia Ltda',
-    responsavel: 'Carlos Almeida',
-    email: 'contato@alphatec.com.br',
-    endereco: 'Av. Paulista, 1000, São Paulo - SP',
-    whatsapp: '(11) 98765-4321',
-    canalPreferido: 'WhatsApp',
-    pendencias: 2,
-    ultimoEnvio: '07/10/2026',
-  },
-  {
-    id: 2,
-    cnpj: '98.765.432/0001-10',
-    razaoSocial: 'Comércio Varejista Beta',
-    responsavel: 'Mariana Costa',
-    email: 'financeiro@varejobeta.com',
-    endereco: 'Rua das Flores, 123, Curitiba - PR',
-    whatsapp: '(41) 99988-7766',
-    canalPreferido: 'E-mail',
-    pendencias: 0,
-    ultimoEnvio: '—',
-  },
-];
+interface CustomerListItemResponse {
+  id: number;
+  cnpj: string;
+  legalName: string;
+  responsibleName: string;
+  email: string;
+  pendingStatus: 'EM_DIA' | 'PENDENTE';
+  lastSubmissionAt: string | null;
+}
+
+interface CustomerResponse extends CustomerListItemResponse {
+  fullAddress: string;
+}
+
+interface CustomerCreateRequest {
+  cnpj: string;
+  legalName: string;
+  responsibleName: string;
+  email: string;
+  fullAddress: string;
+}
+
+type CustomerUpdateRequest = Omit<CustomerCreateRequest, 'cnpj'>;
+
+const dataHora = (valor: string | null | undefined): string => {
+  if (!valor) return '—';
+  const data = new Date(valor);
+  return Number.isNaN(data.getTime())
+    ? '—'
+    : new Intl.DateTimeFormat('pt-BR').format(data);
+};
+
+const toCliente = (response: CustomerListItemResponse): Cliente => ({
+  id: response.id,
+  cnpj: response.cnpj,
+  razaoSocial: response.legalName,
+  responsavel: response.responsibleName,
+  email: response.email,
+  endereco: 'fullAddress' in response ? (response as CustomerResponse).fullAddress ?? '' : '',
+  whatsapp: '',
+  canalPreferido: 'E-mail',
+  pendencias: response.pendingStatus === 'PENDENTE' ? 1 : 0,
+  ultimoEnvio: dataHora(response.lastSubmissionAt),
+});
 
 @Injectable({ providedIn: 'root' })
 export class ClientService {
-  private clients: Cliente[] = [...initialClients];
+  private readonly http = inject(HttpClient);
 
   async list(): Promise<Cliente[]> {
-    return [...this.clients];
+    const response = await firstValueFrom(
+      this.http.get<CustomerListItemResponse[]>('/customers')
+    );
+    return response.map(toCliente);
   }
 
   async getById(id: number | string): Promise<Cliente | null> {
-    return this.clients.find((item) => item.id === Number(id)) ?? null;
+    try {
+      const response = await firstValueFrom(
+        this.http.get<CustomerResponse>(`/customers/${id}`)
+      );
+      return toCliente(response);
+    } catch {
+      return null;
+    }
   }
 
   async create(client: Partial<Cliente>): Promise<Cliente> {
-    const newClient: Cliente = {
-      whatsapp: '',
-      canalPreferido: 'E-mail',
-      pendencias: 0,
-      ultimoEnvio: '—',
-      cnpj: '',
-      razaoSocial: '',
-      responsavel: '',
-      email: '',
-      endereco: '',
-      ...client,
-      id: Date.now(),
+    const body: CustomerCreateRequest = {
+      cnpj: client.cnpj ?? '',
+      legalName: client.razaoSocial ?? '',
+      responsibleName: client.responsavel ?? '',
+      email: client.email ?? '',
+      fullAddress: client.endereco ?? '',
     };
-    this.clients = [...this.clients, newClient];
-    return newClient;
+    const response = await firstValueFrom(
+      this.http.post<CustomerResponse>('/customers', body)
+    );
+    return toCliente(response);
   }
 
   async update(id: number | string, client: Partial<Cliente>): Promise<Cliente | null> {
-    this.clients = this.clients.map((item) =>
-      item.id === Number(id) ? { ...item, ...client } : item
-    );
-    return this.clients.find((item) => item.id === Number(id)) ?? null;
+    const body: CustomerUpdateRequest = {
+      legalName: client.razaoSocial ?? '',
+      responsibleName: client.responsavel ?? '',
+      email: client.email ?? '',
+      fullAddress: client.endereco ?? '',
+    };
+    try {
+      const response = await firstValueFrom(
+        this.http.put<CustomerResponse>(`/customers/${id}`, body)
+      );
+      return toCliente(response);
+    } catch {
+      return null;
+    }
   }
 
   async remove(id: number | string): Promise<void> {
-    this.clients = this.clients.filter((item) => item.id !== Number(id));
+    await firstValueFrom(this.http.delete<void>(`/customers/${id}`));
   }
 }

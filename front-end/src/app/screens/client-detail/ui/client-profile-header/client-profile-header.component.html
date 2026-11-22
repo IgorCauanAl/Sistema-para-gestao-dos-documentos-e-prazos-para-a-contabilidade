@@ -1,0 +1,55 @@
+    <div class="bg-white rounded-3xl border border-slate-200/60 shadow-sm p-6">
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div class="flex items-start gap-4 min-w-0">
+          <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <svg lucideBuilding2 [size]="28"></svg>
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight truncate">
+              {{ client.razaoSocial }}
+            </h1>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+              <span class="text-sm text-slate-500">CNPJ {{ formatCnpj(client.cnpj) }}</span>
+              <span
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
+                [class]="
+                  (client.pendencias ?? 0) > 0
+                    ? 'bg-orange-50 text-orange-700 border-orange-200'
+                    : 'bg-green-50 text-green-700 border-green-200'
+                "
+              >
+                {{ (client.pendencias ?? 0) > 0 ? 'Com pendência' : 'Sem pendência' }}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-sm text-slate-600">
+              <span class="flex items-center gap-1.5">
+                <svg lucideUser [size]="15" class="text-slate-400"></svg>{{ client.responsavel }}
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg lucideMail [size]="15" class="text-slate-400"></svg>{{ client.email }}
+              </span>
+              <span class="flex items-center gap-1.5">
+                <svg lucideMapPin [size]="15" class="text-slate-400"></svg>{{ client.endereco }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            (click)="onEdit.emit()"
+            class="flex items-center gap-2 px-4 py-2.5 border border-slate-200 text-slate-700 bg-white rounded-full text-sm font-medium hover:bg-slate-50 transition-colors"
+          >
+            <svg lucideEdit2 [size]="16"></svg> Editar
+          </button>
+          <button
+            type="button"
+            (click)="onAttach.emit()"
+            class="flex items-center gap-2 px-4 py-2.5 bg-indigo-500 text-white rounded-full text-sm font-medium shadow-sm hover:bg-indigo-600 transition-colors"
+          >
+            <svg lucidePaperclip [size]="16"></svg> Anexar document
+          </button>
+        </div>
+      </div>
+    </div>

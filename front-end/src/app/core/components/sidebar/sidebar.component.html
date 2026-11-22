@@ -1,0 +1,54 @@
+
+    <aside
+      class="w-20 bg-white border-r border-slate-200/50 flex flex-col items-center py-6 h-screen sticky top-0 hidden md:flex shrink-0"
+    >
+      <div
+        class="w-10 h-10 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-500 mb-8 cursor-pointer"
+      >
+        <svg lucideLayoutDashboard [size]="20"></svg>
+      </div>
+      <nav class="flex flex-col gap-6 text-slate-400">
+        <button
+          type="button"
+          aria-label="Alertas de prazos"
+          [attr.aria-expanded]="panelOpen"
+          (click)="panelOpen = !panelOpen"
+          class="p-3 hover:bg-slate-50 hover:text-slate-700 rounded-xl transition-colors relative"
+        >
+          <svg lucideBell [size]="22"></svg>
+          @if (alertas.total > 0) {
+            <span
+              class="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1 bg-orange-500 text-white text-[11px] font-bold rounded-full border-2 border-white flex items-center justify-center"
+            >
+              {{ alertas.total }}
+            </span>
+          }
+        </button>
+        <button class="p-3 hover:bg-slate-50 hover:text-slate-700 rounded-xl transition-colors">
+          <svg lucideSettings [size]="22"></svg>
+        </button>
+        <button class="p-3 hover:bg-slate-50 hover:text-slate-700 rounded-xl transition-colors">
+          <svg lucideGlobe [size]="22"></svg>
+        </button>
+      </nav>
+    </aside>
+
+    <app-alerta-panel
+      [open]="panelOpen"
+      [alertas]="alertas"
+      [clientes]="clientes"
+      [hoje]="hoje"
+      (onClose)="panelOpen = false"
+      (onSelect)="abrirPrazo($event)"
+      (onSimularEmail)="simularEmail()"
+    ></app-alerta-panel>
+
+    <app-email-simulado-modal
+      [open]="emailOpen"
+      [prazos]="prazos"
+      [clientes]="clientes"
+      [hoje]="hoje"
+      (onClose)="emailOpen = false"
+      (onSend)="enviarResumo()"
+    ></app-email-simulado-modal>
+  

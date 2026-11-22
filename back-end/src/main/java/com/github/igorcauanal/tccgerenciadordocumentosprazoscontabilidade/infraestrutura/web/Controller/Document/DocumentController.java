@@ -75,6 +75,13 @@ public class DocumentController {
         return ResponseEntity.ok(documentQueryPort.list(direction));
     }
 
+    /** Transição CRIADO -> ENVIADO (ou reenvio) do ciclo de vida do documento. */
+    @PostMapping("/{documentId}/send")
+    public ResponseEntity<DocumentResponseDTO> sendDocument(@PathVariable Long documentId) {
+        Document document = documentServicePort.sendDocument(documentId);
+        return ResponseEntity.ok(DocumentDTOMapper.toResponseDTO(document));
+    }
+
     @GetMapping("/{documentId}/file/view")
     public ResponseEntity<Resource> viewDocument(@PathVariable Long documentId) {
         DocumentServicePort.DocumentFile file = documentServicePort.viewDocument(documentId);

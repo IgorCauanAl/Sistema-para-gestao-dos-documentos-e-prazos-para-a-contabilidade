@@ -2,6 +2,7 @@ package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infra
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.dashboard.DashboardQueryServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.mapper.Dashboard.DTO.DashboardDTOMapper;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Dashboard.DashboardChartsResponseDTO;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Dashboard.DashboardSummaryResponseDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,11 @@ public class DashboardController {
 
     @GetMapping("/summary")
     public ResponseEntity<DashboardSummaryResponseDTO> getSummary() {
-        // Retorna o resumo da visão geral para o dashboard.
         return ResponseEntity.ok(DashboardDTOMapper.toResponseDTO(dashboardQueryServicePort.getSummary()));
+    }
+
+    @GetMapping("/charts")
+    public ResponseEntity<DashboardChartsResponseDTO> getCharts() {
+        return ResponseEntity.ok(DashboardDTOMapper.toResponseDTO(dashboardQueryServicePort.getCharts()));
     }
 }

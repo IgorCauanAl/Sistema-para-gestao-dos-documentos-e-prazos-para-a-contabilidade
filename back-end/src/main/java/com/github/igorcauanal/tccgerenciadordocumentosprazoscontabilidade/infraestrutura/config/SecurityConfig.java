@@ -93,8 +93,8 @@ public class SecurityConfig {
                         context.securityContextRepository(new NullSecurityContextRepository()))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/public/requests/**").permitAll()
                         .requestMatchers("/auth/login", "/public/**", "/error").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/requests/*/items/*/upload").permitAll()
                         .anyRequest().hasRole(SecurityRoles.CONTADOR)
                 )
                 .formLogin(AbstractHttpConfigurer::disable)

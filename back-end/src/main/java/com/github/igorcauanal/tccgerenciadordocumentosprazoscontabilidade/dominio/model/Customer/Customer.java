@@ -1,6 +1,7 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Customer;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Customer.PendingStatus;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.util.CnpjFormatter;
 
 import java.time.LocalDateTime;
 
@@ -114,12 +115,7 @@ public final class Customer {
         }
 
         private static String requireCnpj(String cnpj) {
-                if (cnpj == null) throw new IllegalArgumentException("CNPJ é obrigatório");
-                String digits = cnpj.replaceAll("\\D", "");
-                if (digits.length() != 14) {
-                        throw new IllegalArgumentException("CNPJ deve conter 14 dígitos");
-                }
-                return cnpj;
+                return CnpjFormatter.format(cnpj);
         }
 
         private static String requireEmail(String email) {

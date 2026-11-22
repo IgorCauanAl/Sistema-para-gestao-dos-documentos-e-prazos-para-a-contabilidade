@@ -1,0 +1,159 @@
+    @if (open) {
+      <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div
+          class="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+        >
+          <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
+            <h2 class="text-xl font-bold text-slate-800">Anexar Documento</h2>
+            <button
+              type="button"
+              (click)="fechar()"
+              [disabled]="saving"
+              class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors disabled:opacity-50"
+              aria-label="Fechar modal de anexo"
+            >
+              <svg lucideX [size]="20"></svg>
+            </button>
+          </div>
+
+          <div class="p-6 overflow-y-auto bg-slate-50/50">
+            <form id="attachDocForm" (submit)="handleSubmit(false, $event)" class="space-y-5">
+              @if (!client) {
+                <div>
+                  <p class="block text-sm font-semibold mb-1.5 text-slate-700">
+                    Cliente <span class="text-red-500">*</span>
+                  </p>
+                  <app-client-select
+                    [clientes]="clientes ?? []"
+                    [value]="clienteId"
+                    (clienteChange)="selecionarCliente($event)"
+                  ></app-client-select>
+                </div>
+              } @else {
+                <div class="flex items-center gap-3 p-3 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                  <svg lucideBuilding2 [size]="16" class="text-indigo-400 shrink-0"></svg>
+                  <span class="text-sm text-slate-600">
+                    Destinatário: <strong class="text-slate-700">{{ client.razaoSocial }}</strong> — CNPJ {{ formatCnpj(client.cnpj) }}
+                  </span>
+                </div>
+              }
+
+              <div>
+                <input #fileInput type="file" class="hidden" (change)="onFileChange($event)" />
+                @if (!file) {
+                  <div
+                    role="button"
+                    tabindex="0"
+                    (click)="fileInput.click()"
+                    (dragover)="onDragOver($event)"
+                    (dragleave)="dragging = false"
+                    (drop)="onDrop($event)"
+                    (keydown)="onDragKey($event)"
+                    class="flex flex-col items-center justify-center gap-2 p-8 border-2 border-dashed rounded-2xl cursor-pointer transition-colors"
+                    [class.border-indigo-400]="dragging"
+                    [class.bg-indigo-50]="dragging"
+                    [class.border-slate-200]="!dragging"
+                    [class.bg-white]="!dragging"
+                  >
+                    <svg lucideUploadCloud [size]="28" class="text-slate-400"></svg>
+                    <p class="text-sm font-medium text-slate-600">
+                      Arraste e solte o arquivo aqui ou clique para selecionar
+                    </p>
+                    <p class="text-xs text-slate-400">PDF, OFX, XML, XLSX, CSV ou TXT</p>
+                  </div>
+                } @else {
+                  <div class="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-2xl">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl shrink-0">
+                        <svg lucideFileText [size]="20"></svg>
+                      </div>
+                      <div class="min-w-0">
+                        <p class="text-sm font-semibold text-slate-700 truncate">{{ file.name }}</p>
+                        <p class="text-xs text-slate-400">{{ formatSize(file.size) }}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      (click)="clearFile()"
+                      class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                      aria-label="Remover arquivo"
+                    >
+                      <svg lucideX [size]="16"></svg>
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="attach-tipo">Tipo de Document</label>
+                <select
+                  id="attach-tipo"
+                  [value]="tipo"
+                  (change)="tipo = $any($event.target).value"
+                  class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm text-slate-700"
+                >
+                  @for (valor of tiposDocument; track valor) {
+                    <option [value]="valor">{{ valor }}</option>
+                  }
+                </select>
+              </div>
+
+              <app-prazo-fields
+                [competencia]="competencia"
+                [vencimento]="vencimento"
+                [diasAntecedencia]="diasAntecedencia"
+                (onCompetenciaChange)="competencia = $event"
+                (onVencimentoChange)="vencimento = $event"
+                (onDiasAntecedenciaChange)="diasAntecedencia = $event"
+              ></app-prazo-fields>
+
+              <div>
+                <p class="block text-sm font-semibold mb-2 text-slate-700">Canal de envio</p>
+                <div class="flex gap-2">
+                  @for (canalOpcao of canais; track canalOpcao.valor) {
+                    <button
+                      type="button"
+                      (click)="canal = canalOpcao.valor"
+                      class="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors"
+                      [class.bg-indigo-50]="canal === canalOpcao.valor"
+                      [class.border-indigo-200]="canal === canalOpcao.valor"
+                      [class.text-indigo-700]="canal === canalOpcao.valor"
+                      [class.bg-white]="canal !== canalOpcao.valor"
+                      [class.border-slate-200]="canal !== canalOpcao.valor"
+                      [class.text-slate-600]="canal !== canalOpcao.valor"
+                    >
+                      <svg [lucideIcon]="canalOpcao.icone" [size]="16"></svg>{{ canalOpcao.rotulo }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (erro) {
+                <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl" role="alert">
+                  <p class="text-sm font-medium text-red-700">{{ erro }}</p>
+                </div>
+              }
+            </form>
+          </div>
+
+          <div class="px-6 py-4 border-t border-slate-100 bg-white flex flex-col-reverse sm:flex-row justify-end gap-3">
+            <button
+              type="submit"
+              form="attachDocForm"
+              [disabled]="saving"
+              class="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors text-sm font-medium disabled:opacity-60"
+            >
+              {{ saving ? 'Salvando...' : 'Salvar rascunho' }}
+            </button>
+            <button
+              type="button"
+              (click)="handleSubmit(true)"
+              [disabled]="saving"
+              class="px-6 py-2.5 rounded-full text-white font-medium hover:opacity-90 transition-opacity bg-[#15803D] text-sm disabled:opacity-60"
+            >
+              {{ saving ? 'Enviando...' : 'Enviar ao cliente' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }

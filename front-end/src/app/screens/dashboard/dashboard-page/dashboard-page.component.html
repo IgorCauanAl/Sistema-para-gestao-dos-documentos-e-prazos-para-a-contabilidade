@@ -1,0 +1,104 @@
+<div class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-4">
+    <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Visão Geral</h1>
+    <span
+      class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-full text-sm font-medium text-slate-600 shadow-sm"
+    >
+      Indicadores do escritório
+    </span>
+  </div>
+
+  @if (erro) {
+    <div
+      class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+      role="alert"
+    >
+      {{ erro }}
+    </div>
+  }
+
+  @if (erroGraficos) {
+    <div
+      class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-700"
+      role="alert"
+    >
+      {{ erroGraficos }}
+    </div>
+  }
+
+  @if (carregando) {
+    <p class="text-sm text-slate-500">Carregando indicadores...</p>
+  }
+
+  @if (summaryCards) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (card of summaryCards; track card.title) {
+        <app-summary-card
+          [title]="card.title"
+          [value]="card.value"
+          [trend]="card.trend ?? ''"
+          [trendUp]="card.trendUp ?? false"
+          [subtext]="card.subtext ?? ''"
+          [icon]="card.icon"
+          [colorTheme]="card.colorTheme ?? ''"
+        ></app-summary-card>
+      }
+    </div>
+  }
+
+  @if (charts) {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+      <app-card className="lg:col-span-2">
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h3 class="text-xl font-bold text-slate-800">Fluxo de Documentos</h3>
+            <p class="text-sm text-slate-500 mt-1">Últimos 6 meses, por competência</p>
+          </div>
+        </div>
+
+        @if (fluxoData.labels?.length) {
+          <div class="h-64 relative">
+            <canvas baseChart [type]="'line'" [data]="fluxoData" [options]="fluxoOptions"></canvas>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-400 py-16 text-center">Ainda não há documentos neste período.</p>
+        }
+      </app-card>
+
+      <app-card>
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Obrigações por Status</h3>
+        @if (obrigacoesData.labels?.length) {
+          <div class="h-64 relative">
+            <canvas baseChart [type]="'bar'" [data]="obrigacoesData" [options]="obrigacoesOptions"></canvas>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-400 py-16 text-center">Nenhuma obrigação cadastrada.</p>
+        }
+      </app-card>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <app-card>
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Documentos por Tipo</h3>
+        @if (tiposData.labels?.length) {
+          <div class="h-64 relative">
+            <canvas baseChart [type]="'bar'" [data]="tiposData" [options]="tiposOptions"></canvas>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-400 py-16 text-center">Nenhum documento cadastrado.</p>
+        }
+      </app-card>
+
+      <app-card>
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Situação dos Clientes</h3>
+        @if (clientesData.labels?.length) {
+          <div class="h-64 relative">
+            <canvas baseChart [type]="'doughnut'" [data]="clientesData" [options]="clientesOptions"></canvas>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-400 py-16 text-center">Nenhum cliente cadastrado.</p>
+        }
+      </app-card>
+    </div>
+  }
+</div>

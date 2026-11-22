@@ -20,6 +20,9 @@ public interface DocumentServicePort {
                            DocumentDirection direction,
                            FileFormat fileFormat);
 
+     /** Envia (ou reenvia) o documento, transitando para ENVIADO. */
+     Document sendDocument(Long documentId);
+
      DocumentFile viewDocument(Long documentId);
 
      DocumentFile downloadDocument(Long documentId);

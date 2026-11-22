@@ -1,0 +1,15 @@
+
+    <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" [class]="meta.className">
+      @switch (meta.kind) {
+        @case ('spreadsheet') {
+          <svg lucideFileSpreadsheet [size]="size"></svg>
+        }
+        @case ('code') {
+          <svg lucideFileCode [size]="size"></svg>
+        }
+        @default {
+          <svg lucideFileText [size]="size"></svg>
+        }
+      }
+    </span>
+  

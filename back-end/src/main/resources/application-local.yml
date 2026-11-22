@@ -1,0 +1,13 @@
+# Perfil exclusivo para desenvolvimento fora do Docker.
+# Uso: ./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+# Os valores abaixo são apenas padrões locais: não usar em produção.
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:contadash}
+    username: ${DB_USER:contadash}
+    password: ${DB_PASSWORD:contadash}
+
+api:
+  security:
+    token:
+      secret: ${API_SECURITY_TOKEN_SECRET:dev-only-secret-change-me-32-bytes-minimum}

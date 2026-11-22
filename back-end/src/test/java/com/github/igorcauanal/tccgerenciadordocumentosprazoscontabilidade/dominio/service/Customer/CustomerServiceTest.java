@@ -30,7 +30,7 @@ class CustomerServiceTest {
 
     @Test
     void registerShouldSaveWhenCnpjIsNew() {
-        when(customerRepository.findByCnpj("12345678901234")).thenReturn(Optional.empty());
+        when(customerRepository.findByCnpj("12.345.678/9012-34")).thenReturn(Optional.empty());
         when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Customer result = customerService.register(
@@ -42,7 +42,7 @@ class CustomerServiceTest {
         );
 
         assertNotNull(result);
-        assertEquals("12345678901234", result.getCnpj());
+        assertEquals("12.345.678/9012-34", result.getCnpj());
         assertEquals(PendingStatus.PENDENTE, result.getPendingStatus());
         verify(customerRepository).save(any(Customer.class));
     }
@@ -53,7 +53,7 @@ class CustomerServiceTest {
                 1L, "12345678901234", "Alpha", "Carlos", "contato@alpha.com", "Rua A, 1",
                 PendingStatus.PENDENTE, null
         );
-        when(customerRepository.findByCnpj("12345678901234")).thenReturn(Optional.of(existing));
+        when(customerRepository.findByCnpj("12.345.678/9012-34")).thenReturn(Optional.of(existing));
 
         assertThrows(AlreadyRegisteredCustomerException.class, () -> customerService.register(
                 "12345678901234",

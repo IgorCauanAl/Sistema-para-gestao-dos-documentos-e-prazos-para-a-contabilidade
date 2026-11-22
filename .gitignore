@@ -38,6 +38,13 @@ front-end/coverage/
 Thumbs.db
 *.swp
 
+# Contexto/configuração de assistentes de IA (local)
+.aiassistant/
+.cursor/
+.claude/
+.opencode/
+.github/copilot-instructions.md
+
 # Variáveis de ambiente (credenciais locais)
 .env
 .env.*

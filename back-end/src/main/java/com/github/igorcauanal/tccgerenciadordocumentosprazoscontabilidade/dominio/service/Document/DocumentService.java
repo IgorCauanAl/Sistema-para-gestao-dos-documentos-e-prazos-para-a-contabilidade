@@ -5,6 +5,7 @@ import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domini
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.DocumentDirection;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.FileFormat;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Document.SendChannel;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.Deadline.DeadlineServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.Document.DocumentServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Document.DocumentRepositoryPort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Document.StorageDeviceArchivePort;
@@ -16,11 +17,14 @@ public class DocumentService implements DocumentServicePort {
 
     private final DocumentRepositoryPort documentRepositoryPort;
     private final StorageDeviceArchivePort storageDeviceArchivePort;
+    private final DeadlineServicePort deadlineServicePort;
 
     public DocumentService(DocumentRepositoryPort documentRepositoryPort,
-                           StorageDeviceArchivePort storageDeviceArchivePort) {
+                           StorageDeviceArchivePort storageDeviceArchivePort,
+                           DeadlineServicePort deadlineServicePort) {
         this.documentRepositoryPort = documentRepositoryPort;
         this.storageDeviceArchivePort = storageDeviceArchivePort;
+        this.deadlineServicePort = deadlineServicePort;
     }
 
     @Override
@@ -55,6 +59,18 @@ public class DocumentService implements DocumentServicePort {
                 storagePath
         );
 
+        Document savedDocument = documentRepositoryPort.save(document);
+
+        // Todo documento com vencimento gera um prazo correspondente.
+        deadlineServicePort.createFromDocument(savedDocument);
+
+        return savedDocument;
+    }
+
+    @Override
+    public Document sendDocument(Long documentId) {
+        Document document = load(documentId);
+        document.resend();
         return documentRepositoryPort.save(document);
     }
 

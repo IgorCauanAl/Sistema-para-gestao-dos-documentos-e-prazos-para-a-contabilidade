@@ -12,12 +12,6 @@ export interface DataHora {
 
 export const agora = (): DataHora => ({ data: formatarData(new Date()), hora: formatarHora(new Date()) });
 
-export const somaDias = (dias: number): Date => {
-  const d = new Date();
-  d.setDate(d.getDate() + dias);
-  return d;
-};
-
 export const paraISO = (date: Date): string =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
@@ -48,14 +42,3 @@ export const dataBRParaISO = (br: string): string => {
   return `${ano}-${mes}-${dia}`;
 };
 
-export const ipAleatorio = (): string => {
-  const oct = () => Math.floor(Math.random() * 250) + 2;
-  return `${oct()}.${oct()}.${oct()}.${oct()}`;
-};
-
-export const tokenAleatorio = (): string => {
-  const hex = '0123456789abcdef';
-  let out = '';
-  for (let i = 0; i < 12; i += 1) out += hex[Math.floor(Math.random() * 16)];
-  return out;
-};

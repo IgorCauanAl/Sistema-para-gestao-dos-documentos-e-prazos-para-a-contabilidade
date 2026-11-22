@@ -1,233 +1,264 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 
-import { ANTECEDENCIA_PADRAO } from '../domain/documento';
-import { agora, formatarData, ipAleatorio, somaDias, tokenAleatorio } from '../domain/data';
+import { dataBRParaISO, formatarData, formatarHora, paraBR, paraData } from '../domain/data';
 import type {
   Solicitacao,
   SolicitacaoItem,
   SolicitacaoNova,
   SolicitacaoTentativa,
 } from '../domain/models';
-import {
-  calcularStatusSolicitacao,
-  MotivoRecusa,
-  StatusItem,
-  StatusSolicitacao,
-} from '../domain/solicitacao';
 
-const clonar = <T>(obj: T): T => structuredClone(obj);
+// Constantes locais para evitar ciclo de inicialização de módulos no runner de testes.
+const STATUS_SOLICITACAO = {
+  ABERTA: 'ABERTA',
+  CONCLUIDA: 'CONCLUIDA',
+  CANCELADA: 'CANCELADA',
+  EXPIRADA: 'EXPIRADA',
+} as const;
 
-const criarItem = (
-  id: number,
-  nome: string,
-  formatoEsperado: string,
-  status: string,
-  tentativas: SolicitacaoTentativa[] = []
-): SolicitacaoItem => ({ id, nome, formatoEsperado, status, tentativas });
+interface ChecklistItemDTO {
+  id: number;
+  description: string;
+  expectedFileFormat: string | null;
+  status: 'PENDENTE' | 'ENVIADO_PELO_CLIENTE' | 'ACEITO' | 'RECUSADO';
+  uploadedFileName: string | null;
+  uploadedDocumentId?: number | null;
+  sentAt: string | null;
+  reviewedAt: string | null;
+  rejectionReason: string | null;
+}
 
-const criarTentativa = (
-  data: string,
-  hora: string,
-  acao: string,
-  extra: Partial<SolicitacaoTentativa> = {}
-): SolicitacaoTentativa => ({
-  id: `${data}-${hora}-${acao}-${Math.random().toString(36).slice(2, 7)}`,
-  data,
-  hora,
-  acao,
-  arquivo: null,
-  motivo: null,
-  detalhes: null,
-  canalOrigem: null,
-  ip: ipAleatorio(),
-  protocolo: null,
-  observacao: null,
-  ...extra,
-});
+interface RequestListItemDTO {
+  id: number;
+  customerId: number;
+  title: string;
+  competence: string;
+  dueDate: string | null;
+  status: string;
+  acceptedItems: number;
+  totalItems: number;
+  progress?: number | string;
+}
 
-let protocoloSeq = 123;
-const proximoProtocolo = () => {
-  protocoloSeq += 1;
-  return `PROT-${new Date().getFullYear()}-${String(protocoloSeq).padStart(6, '0')}`;
+interface RequestResponseDTO extends RequestListItemDTO {
+  createdIn: string | null;
+  deadline?: string | null;
+  publicToken?: string | null;
+  checklist: ChecklistItemDTO[] | null;
+}
+
+interface RequestReadModelDTO extends RequestListItemDTO {
+  createdAt: string | null;
+  items: ChecklistItemDTO[] | null;
+}
+
+const statusItem = (status: string): string => {
+  switch (status) {
+    case 'ENVIADO_PELO_CLIENTE':
+      return 'ENVIADO';
+    case 'ACEITO':
+      return 'APROVADO';
+    case 'RECUSADO':
+      return 'RECUSADO';
+    default:
+      return 'PENDENTE';
+  }
 };
 
-const initialSolicitacoes: Solicitacao[] = [
-  {
-    id: 1,
-    clienteId: 1,
-    titulo: 'Documentos de 09/2026',
-    competencia: '09/2026',
-    prazo: '15/10/2026',
-    instrucoes:
-      'Envie os arquivos em PDF, nomeados com a competência. Em caso de dúvidas, chame no WhatsApp do escritório.',
-    canal: 'WhatsApp',
-    token: 'a8f3c2e19b7d',
-    validadeAte: '15/10/2026',
-    validadeDias: 7,
-    status: StatusSolicitacao.EM_CONFERENCIA,
-    criadoEm: { data: '30/09/2026', hora: '16:10' },
-    itens: [
-      criarItem(11, 'Extrato bancário', 'PDF', StatusItem.APROVADO, [
-        criarTentativa('01/10/2026', '10:20', 'ENVIADO', {
-          arquivo: { nome: 'extrato_banco_set.pdf', tamanho: '512 KB' },
-          protocolo: 'PROT-2026-000118',
-        }),
-        criarTentativa('02/10/2026', '09:05', 'APROVADO'),
-      ]),
-      criarItem(12, 'Notas fiscais', 'PDF', StatusItem.ENVIADO, [
-        criarTentativa('06/10/2026', '14:32', 'ENVIADO', {
-          arquivo: { nome: 'notas_setembro.pdf', tamanho: '2,3 MB' },
-          protocolo: 'PROT-2026-000121',
-        }),
-      ]),
-      criarItem(13, 'Folha de ponto', 'PDF', StatusItem.RECUSADO, [
-        criarTentativa('04/10/2026', '08:50', 'ENVIADO', {
-          arquivo: { nome: 'folha_ponto_set.pdf', tamanho: '1,1 MB' },
-          protocolo: 'PROT-2026-000119',
-        }),
-        criarTentativa('05/10/2026', '11:15', 'RECUSADO', {
-          motivo: MotivoRecusa.INCOMPLETO,
-          detalhes: 'faltam as páginas 3 e 4',
-        }),
-      ]),
-    ],
-  },
-  {
-    id: 2,
-    clienteId: 1,
-    titulo: 'Fluxo de caixa 08/2026',
-    competencia: '08/2026',
-    prazo: '30/09/2026',
+const statusSolicitacao = (status: string, deadline: string | null | undefined): string => {
+  if (status === STATUS_SOLICITACAO.CANCELADA || status === STATUS_SOLICITACAO.CONCLUIDA) {
+    return status;
+  }
+
+  const alvo = paraData(paraBR(deadline));
+  if (alvo) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    if (alvo.getTime() < hoje.getTime()) return STATUS_SOLICITACAO.EXPIRADA;
+  }
+
+  return STATUS_SOLICITACAO.ABERTA;
+};
+
+const dataHora = (valor: string | null | undefined): { data: string; hora: string } => {
+  if (!valor) return { data: '', hora: '' };
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return { data: '', hora: '' };
+  return { data: formatarData(data), hora: formatarHora(data) };
+};
+
+const tentativas = (item: ChecklistItemDTO): SolicitacaoTentativa[] => {
+  const resultado: SolicitacaoTentativa[] = [];
+
+  if (item.uploadedFileName) {
+    const { data, hora } = dataHora(item.sentAt);
+    resultado.push({
+      id: `envio-${item.id}`,
+      data,
+      hora,
+      acao: 'ENVIADO',
+      arquivo: { nome: item.uploadedFileName, tamanho: '' },
+      motivo: null,
+      detalhes: null,
+      canalOrigem: 'Link público',
+      ip: '',
+      protocolo: null,
+      observacao: null,
+      documentId: item.uploadedDocumentId ?? null,
+    });
+  }
+
+  if (item.status === 'ACEITO') {
+    const { data, hora } = dataHora(item.reviewedAt);
+    resultado.push({
+      id: `aprovacao-${item.id}`,
+      data,
+      hora,
+      acao: 'APROVADO',
+      arquivo: null,
+      motivo: null,
+      detalhes: null,
+      canalOrigem: null,
+      ip: '',
+      protocolo: null,
+      observacao: null,
+    });
+  }
+
+  if (item.rejectionReason) {
+    const { data, hora } = dataHora(item.reviewedAt);
+    resultado.push({
+      id: `recusa-${item.id}`,
+      data,
+      hora,
+      acao: 'RECUSADO',
+      arquivo: null,
+      motivo: null,
+      detalhes: item.rejectionReason,
+      canalOrigem: null,
+      ip: '',
+      protocolo: null,
+      observacao: null,
+    });
+  }
+
+  return resultado;
+};
+
+const toItem = (item: ChecklistItemDTO): SolicitacaoItem => ({
+  id: item.id,
+  nome: item.description,
+  formatoEsperado: item.expectedFileFormat ?? '',
+  status: statusItem(item.status),
+  tentativas: tentativas(item),
+});
+
+const toSolicitacao = (
+  dto: RequestListItemDTO,
+  opcoes: {
+    criadoEm?: string | null;
+    token?: string | null;
+    deadline?: string | null;
+    itens?: SolicitacaoItem[];
+  } = {}
+): Solicitacao => {
+  const prazo = paraBR(dto.dueDate ?? opcoes.deadline ?? null);
+  const criadoEm = dataHora(opcoes.criadoEm);
+
+  return {
+    id: dto.id,
+    clienteId: dto.customerId,
+    titulo: dto.title,
+    competencia: dto.competence,
+    prazo,
     instrucoes: '',
-    canal: 'E-mail',
-    token: 'f1e2d3c4b5a6',
-    validadeAte: '31/10/2026',
-    validadeDias: 30,
-    status: StatusSolicitacao.CONCLUIDA,
-    criadoEm: { data: '20/09/2026', hora: '09:00' },
-    itens: [
-      criarItem(21, 'Fluxo de caixa', 'XLSX', StatusItem.APROVADO, [
-        criarTentativa('22/09/2026', '11:40', 'ENVIADO', {
-          arquivo: { nome: 'fluxo_caixa_082026.xlsx', tamanho: '86 KB' },
-          protocolo: 'PROT-2026-000101',
-        }),
-        criarTentativa('23/09/2026', '10:12', 'APROVADO'),
-      ]),
-      criarItem(22, 'Extrato bancário', 'PDF', StatusItem.APROVADO, [
-        criarTentativa('22/09/2026', '11:41', 'ENVIADO', {
-          arquivo: { nome: 'extrato_banco_ago.pdf', tamanho: '480 KB' },
-          protocolo: 'PROT-2026-000102',
-        }),
-        criarTentativa('23/09/2026', '10:14', 'APROVADO'),
-      ]),
-    ],
-  },
-  {
-    id: 3,
-    clienteId: 2,
-    titulo: 'Documentos de 09/2026',
-    competencia: '09/2026',
-    prazo: formatarData(somaDias(5)),
-    instrucoes: 'Prioridade para o extrato bancário atualizado.',
-    canal: 'E-mail',
-    token: 'c4d5e6f7a8b9',
-    validadeAte: formatarData(somaDias(7)),
-    validadeDias: 7,
-    status: StatusSolicitacao.ABERTA,
-    criadoEm: { data: formatarData(new Date()), hora: '08:20' },
-    itens: [
-      criarItem(31, 'Extrato bancário', 'PDF', StatusItem.PENDENTE),
-      criarItem(32, 'Recibos', 'Qualquer', StatusItem.PENDENTE),
-    ],
-  },
-];
+    canal: 'Link público',
+    token: opcoes.token ?? '',
+    validadeAte: prazo,
+    validadeDias: 0,
+    status: statusSolicitacao(dto.status, dto.dueDate ?? opcoes.deadline),
+    criadoEm,
+    itens: opcoes.itens ?? [],
+    aceitos: dto.acceptedItems ?? 0,
+    totalItens: dto.totalItems ?? 0,
+  };
+};
 
 @Injectable({ providedIn: 'root' })
 export class SolicitacaoService {
-  private solicitacoes: Solicitacao[] = clonar(initialSolicitacoes);
-
-  private salvar(sol: Solicitacao): Solicitacao {
-    sol.status = calcularStatusSolicitacao(sol);
-    return clonar(sol);
-  }
-
-  private encontrar(id: number | string): Solicitacao | undefined {
-    return this.solicitacoes.find((sol) => sol.id === Number(id));
-  }
+  private readonly http = inject(HttpClient);
 
   async list(): Promise<Solicitacao[]> {
-    return clonar(this.solicitacoes);
+    const clientes = await firstValueFrom(
+      this.http.get<Array<{ id: number }>>('/customers')
+    );
+
+    const porCliente = await Promise.all(
+      clientes.map((cliente) =>
+        firstValueFrom(
+          this.http.get<RequestListItemDTO[]>(`/requests?customerId=${cliente.id}`)
+        )
+      )
+    );
+
+    return porCliente.flat().map((dto) => toSolicitacao(dto));
+  }
+
+  async listByCliente(clienteId: number | string): Promise<Solicitacao[]> {
+    const response = await firstValueFrom(
+      this.http.get<RequestListItemDTO[]>(`/requests?customerId=${clienteId}`)
+    );
+    return response.map((dto) => toSolicitacao(dto));
   }
 
   async getById(id: number | string): Promise<Solicitacao | null> {
-    const sol = this.encontrar(id);
-    return sol ? clonar(sol) : null;
-  }
-
-  async getByToken(token: string): Promise<Solicitacao | null> {
-    const sol = this.solicitacoes.find((item) => item.token === token);
-    return sol ? clonar(sol) : null;
+    try {
+      const dto = await firstValueFrom(
+        this.http.get<RequestReadModelDTO>(`/requests/${id}`)
+      );
+      return toSolicitacao(dto, {
+        criadoEm: dto.createdAt,
+        itens: (dto.items ?? []).map(toItem),
+      });
+    } catch {
+      return null;
+    }
   }
 
   async create(dados: SolicitacaoNova): Promise<Solicitacao> {
-    const nova: Solicitacao = {
-      id: Date.now(),
-      clienteId: Number(dados.clienteId),
-      titulo: dados.titulo,
-      competencia: dados.competencia,
-      prazo: dados.prazo,
-      instrucoes: dados.instrucoes ?? '',
-      canal: dados.canal,
-      token: tokenAleatorio(),
-      validadeDias: Number(dados.validadeDias),
-      validadeAte: formatarData(somaDias(Number(dados.validadeDias))),
-      status: StatusSolicitacao.ABERTA,
-      criadoEm: agora(),
-      itens: (dados.itens ?? []).map((item, index) =>
-        criarItem(Date.now() + index, item.nome, item.formato, StatusItem.PENDENTE)
-      ),
+    const body = {
+      customerId: Number(dados.clienteId),
+      title: dados.titulo,
+      competence: dados.competencia,
+      deadline: dataBRParaISO(dados.prazo),
+      checklist: (dados.itens ?? []).map((item) => ({
+        description: item.nome,
+        expectedFileFormat: item.formato.toUpperCase(),
+      })),
     };
 
-    this.solicitacoes = [...this.solicitacoes, nova];
-    return this.salvar(nova);
-  }
+    const dto = await firstValueFrom(
+      this.http.post<RequestResponseDTO>('/requests', body)
+    );
 
-  async renovarLink(id: number | string): Promise<Solicitacao | null> {
-    const sol = this.encontrar(id);
-    if (!sol) return null;
-    sol.validadeAte = formatarData(somaDias(sol.validadeDias ?? 7));
-    return this.salvar(sol);
-  }
-
-  async cancelar(id: number | string): Promise<Solicitacao | null> {
-    const sol = this.encontrar(id);
-    if (!sol) return null;
-    sol.status = StatusSolicitacao.CANCELADA;
-    return this.salvar(sol);
+    return toSolicitacao(dto, {
+      criadoEm: dto.createdIn,
+      token: dto.publicToken,
+      deadline: dto.deadline,
+      itens: (dto.checklist ?? []).map(toItem),
+    });
   }
 
   async aprovarItem(
     solicitacaoId: number | string,
-    itemId: number | string,
-    dados: { competencia?: string; vencimento?: string | null; diasAntecedencia?: number } = {}
+    itemId: number | string
   ): Promise<Solicitacao | null> {
-    const sol = this.encontrar(solicitacaoId);
-    const item = sol?.itens.find((i) => i.id === Number(itemId));
-    if (!item || !sol) return null;
-
-    const { data, hora } = agora();
-    item.status = StatusItem.APROVADO;
-    item.competencia = dados.competencia ?? sol.competencia;
-    item.vencimento = dados.vencimento ?? null;
-    item.diasAntecedencia = dados.diasAntecedencia ?? ANTECEDENCIA_PADRAO;
-    item.tentativas = [
-      ...item.tentativas,
-      criarTentativa(data, hora, 'APROVADO', {
-        competencia: item.competencia,
-        vencimento: item.vencimento,
-      }),
-    ];
-    return this.salvar(sol);
+    await firstValueFrom(
+      this.http.post(`/requests/${solicitacaoId}/items/${itemId}/accept`, {})
+    );
+    return this.getById(solicitacaoId);
   }
 
   async recusarItem(
@@ -235,72 +266,24 @@ export class SolicitacaoService {
     itemId: number | string,
     dados: { motivo: string; detalhes?: string }
   ): Promise<Solicitacao | null> {
-    const sol = this.encontrar(solicitacaoId);
-    const item = sol?.itens.find((i) => i.id === Number(itemId));
-    if (!item || !sol) return null;
-
-    const { data, hora } = agora();
-    item.status = StatusItem.RECUSADO;
-    item.tentativas = [
-      ...item.tentativas,
-      criarTentativa(data, hora, 'RECUSADO', { motivo: dados.motivo, detalhes: dados.detalhes ?? null }),
-    ];
-    return this.salvar(sol);
+    const reason = [dados.motivo, dados.detalhes].filter(Boolean).join(': ');
+    await firstValueFrom(
+      this.http.post(`/requests/${solicitacaoId}/items/${itemId}/reject`, { reason })
+    );
+    return this.getById(solicitacaoId);
   }
 
   async registrarRecebimentoManual(
     solicitacaoId: number | string,
     itemId: number | string,
-    dados: {
-      arquivo: { nome: string; tamanho: string };
-      canalOrigem: string;
-      vencimento?: string | null;
-      diasAntecedencia?: number;
-      observacao?: string;
-    }
+    dados: { file: File }
   ): Promise<Solicitacao | null> {
-    const sol = this.encontrar(solicitacaoId);
-    const item = sol?.itens.find((i) => i.id === Number(itemId));
-    if (!item || !sol) return null;
+    const form = new FormData();
+    form.append('file', dados.file, dados.file.name);
 
-    const { data, hora } = agora();
-    item.status = StatusItem.ENVIADO;
-    item.tentativas = [
-      ...item.tentativas,
-      criarTentativa(data, hora, 'REGISTRO_MANUAL', {
-        arquivo: dados.arquivo,
-        canalOrigem: dados.canalOrigem,
-        vencimento: dados.vencimento ?? null,
-        diasAntecedencia: dados.diasAntecedencia ?? null,
-        observacao: dados.observacao ?? null,
-      }),
-    ];
-    return this.salvar(sol);
-  }
-
-  async enviarPeloPortal(
-    token: string,
-    itemId: number | string,
-    dados: { arquivo: { nome: string; tamanho: string }; observacao?: string }
-  ): Promise<{ solicitacao: Solicitacao; protocolo: string; tentativa: SolicitacaoTentativa } | null> {
-    const sol = this.solicitacoes.find((item) => item.token === token);
-    if (!sol || sol.status === StatusSolicitacao.CANCELADA) return null;
-
-    const item = sol.itens.find((i) => i.id === Number(itemId));
-    if (!item || item.status === StatusItem.APROVADO) return null;
-
-    const { data, hora } = agora();
-    const eraRecusado = item.status === StatusItem.RECUSADO;
-    const protocolo = proximoProtocolo();
-    const tentativa = criarTentativa(data, hora, eraRecusado ? 'REENVIADO' : 'ENVIADO', {
-      arquivo: dados.arquivo,
-      observacao: dados.observacao ?? null,
-      protocolo,
-    });
-
-    item.status = StatusItem.ENVIADO;
-    item.tentativas = [...item.tentativas, tentativa];
-
-    return { solicitacao: this.salvar(sol), protocolo, tentativa: clonar(tentativa) };
+    await firstValueFrom(
+      this.http.post(`/requests/${solicitacaoId}/items/${itemId}/upload`, form)
+    );
+    return this.getById(solicitacaoId);
   }
 }

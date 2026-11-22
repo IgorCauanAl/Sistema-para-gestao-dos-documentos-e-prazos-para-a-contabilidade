@@ -2,6 +2,7 @@ package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domin
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.exception.BusinessException;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.enums.Request.RequestStatus;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.util.PublicTokenHasher;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -22,6 +23,7 @@ public class Request {
     private LocalDateTime createdIn;
     private LocalDateTime completedIn;
     private LocalDateTime cancelledIn;
+    private String publicTokenHash;
     private final List<ChecklistItem> checklist = new ArrayList<>();
 
     private Request() {
@@ -35,7 +37,8 @@ public class Request {
                     LocalDateTime cancelledIn,
                     LocalDateTime completedIn,
                     LocalDateTime createdIn,
-                    RequestStatus status) {
+                    RequestStatus status,
+                    String publicTokenHash) {
         this.id = id;
         this.customerId = customerId;
         this.title = title;
@@ -45,6 +48,7 @@ public class Request {
         this.completedIn = completedIn;
         this.createdIn = createdIn != null ? createdIn : LocalDateTime.now();
         this.status = status != null ? status : RequestStatus.ABERTA;
+        this.publicTokenHash = publicTokenHash;
     }
 
     //Fábrica — cria uma NOVA solicitação. Valida todos os campos obrigatórios.
@@ -75,6 +79,21 @@ public class Request {
         return request;
     }
 
+    /**
+     * O serviço de aplicação gera o token cru e Associa apenas o hash SHA-256.
+     * O token cru nunca entra no agregado nem em logs.
+     */
+    public void assignPublicTokenHash(String publicTokenHash) {
+        if (this.publicTokenHash != null) {
+            throw new BusinessException("Solicitação já possui link público");
+        }
+        requireNonBlank(publicTokenHash, "Hash do token público é obrigatório");
+        if (publicTokenHash.length() != PublicTokenHasher.HASH_LENGTH) {
+            throw new BusinessException("Hash do token público inválido");
+        }
+        this.publicTokenHash = publicTokenHash;
+    }
+
     // usada apenas pelo mapper. Preserva o estado, sem validação.
     public static Request rebuild (Long id,
                                     Long customerId,
@@ -85,9 +104,10 @@ public class Request {
                                     LocalDateTime completedIn,
                                     LocalDateTime createdIn,
                                     RequestStatus status,
-                                    List<ChecklistItem> checklist) {
+                                    List<ChecklistItem> checklist,
+                                    String publicTokenHash) {
         Request request = new Request(id, customerId, title, competence, deadline,
-                cancelledIn, completedIn, createdIn, status);
+                cancelledIn, completedIn, createdIn, status, publicTokenHash);
 
         if (checklist != null) {
             request.checklist.addAll(checklist);
@@ -106,18 +126,25 @@ public class Request {
         return item;
     }
 
-    // Progresso da conferência: aceitos total. Retorna 0.0000 – 1.0000
+    // Progresso da conferência: aceitos / total. Retorna 0.0000 – 1.0000
+    public int totalItems() {
+        return checklist.size();
+    }
+
+    public long acceptedItems() {
+        return checklist.stream()
+                .filter(ChecklistItem::isAccepted)
+                .count();
+    }
+
     public BigDecimal calculateProgress() {
-        if (checklist.isEmpty()) {
+        int total = totalItems();
+        if (total == 0) {
             return BigDecimal.ZERO;
         }
 
-        long accepted = checklist.stream()
-                .filter(ChecklistItem::isAccepted)
-                .count();
-
-        return BigDecimal.valueOf(accepted)
-                .divide(BigDecimal.valueOf(checklist.size()), 4, RoundingMode.HALF_UP);
+        return BigDecimal.valueOf(acceptedItems())
+                .divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
     }
 
     public ChecklistItem findItem(Long itemId) {
@@ -187,6 +214,7 @@ public class Request {
     public LocalDateTime getCreatedIn() { return createdIn; }
     public LocalDateTime getCompletedIn() { return completedIn; }
     public LocalDateTime getCancelledIn() { return cancelledIn; }
+    public String getPublicTokenHash() { return publicTokenHash; }
     public List<ChecklistItem> getChecklist() { return List.copyOf(checklist); }
 
 

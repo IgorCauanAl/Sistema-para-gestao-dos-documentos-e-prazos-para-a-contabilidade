@@ -45,6 +45,9 @@ public class RequestEntity {
         @Column(name = "cancelled_in")
         private LocalDateTime cancelledIn;
 
+        @Column(name = "public_token_hash", length = 64, unique = true)
+        private String publicTokenHash;
+
     @OneToMany(mappedBy = "request",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
@@ -70,7 +73,8 @@ public class RequestEntity {
             RequestStatus status,
             LocalDateTime createdIn,
             LocalDateTime completedIn,
-            LocalDateTime cancelledIn) {
+            LocalDateTime cancelledIn,
+            String publicTokenHash) {
 
         RequestEntity entity = new RequestEntity();
         entity.setId(id);
@@ -82,6 +86,7 @@ public class RequestEntity {
         entity.setCreatedIn(createdIn);
         entity.setCompletedIn(completedIn);
         entity.setCancelledIn(cancelledIn);
+        entity.setPublicTokenHash(publicTokenHash);
         return entity;
     }
 
@@ -95,6 +100,7 @@ public class RequestEntity {
     public void setCreatedIn(LocalDateTime createdIn)   { this.createdIn = createdIn; }
     public void setCompletedIn(LocalDateTime v)         { this.completedIn = v; }
     public void setCancelledIn(LocalDateTime v)         { this.cancelledIn = v; }
+    public void setPublicTokenHash(String hash)         { this.publicTokenHash = hash; }
 
 
 

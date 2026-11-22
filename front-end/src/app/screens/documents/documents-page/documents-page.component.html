@@ -1,0 +1,159 @@
+
+    @if (docs) {
+      <div class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-800">Documentos</h1>
+            <p class="text-sm text-slate-500 mt-1">
+              Acompanhe tudo que foi enviado e recebido pelo escritório
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              (click)="receiveOpen = true"
+              class="flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-100 transition-colors"
+            >
+              <svg lucideInbox [size]="16"></svg> Registrar recebimento
+            </button>
+            <button
+              type="button"
+              (click)="attachOpen = true"
+              class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors"
+            >
+              <svg lucidePlus [size]="16"></svg> Anexar document
+            </button>
+          </div>
+        </div>
+
+        <app-documents-summary-cards
+          [contagens]="contagens"
+          [ativo]="cardAtivo"
+          (onClick)="setCardAtivo($event)"
+        ></app-documents-summary-cards>
+
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <app-documents-tabs
+            [active]="tab"
+            [counts]="contadoresAbas"
+            (onChange)="setTab($event)"
+          ></app-documents-tabs>
+          @if (cardAtivo) {
+            <button
+              type="button"
+              (click)="setCardAtivo(null)"
+              class="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              Limpar filtro do card
+            </button>
+          }
+        </div>
+
+        <app-documents-filters
+          [filters]="filters"
+          [clientes]="clientes"
+          [opcoesTipo]="opcoesTipo"
+          (onChange)="setFilters($event)"
+          (onClear)="setFilters(emptyFilters)"
+        ></app-documents-filters>
+
+        @if (listaExibida.length === 0) {
+          <app-empty-state
+            title="Nenhum document encontrado com esses filtros"
+            subtitle="Ajuste a busca, o cliente, o tipo ou o status para encontrar o document desejado."
+          ></app-empty-state>
+        } @else {
+          <div class="space-y-4">
+            <app-documents-table
+              [documents]="paginada"
+              [nomeCliente]="nomeClienteFn"
+              [sort]="sort"
+              [selectedIds]="selectedIds"
+              [todosDaPaginaSelecionados]="todosDaPaginaSelecionados"
+              (onView)="abrirViewer($event)"
+              (onSend)="handleSend($event)"
+              (onSort)="toggleSort($event)"
+              (onToggleRow)="toggleRow($event)"
+              (onTogglePage)="togglePage($event)"
+            ></app-documents-table>
+
+            <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+              <p>
+                Mostrando {{ (paginaAtual - 1) * PAGE_SIZE + 1 }}–{{ fimPagina }} de
+                {{ listaExibida.length }} document{{ listaExibida.length > 1 ? 's' : '' }}
+              </p>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label="Página anterior"
+                  [disabled]="paginaAtual <= 1"
+                  (click)="page = paginaAtual - 1"
+                  class="px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+                <button
+                  type="button"
+                  aria-label="Próxima página"
+                  [disabled]="paginaAtual >= totalPaginas"
+                  (click)="page = paginaAtual + 1"
+                  class="px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (selecionados.length > 0) {
+          <app-batch-actions-bar
+            [count]="selecionados.length"
+            [podeReenviar]="podeReenviar"
+            [podeJuntar]="podeJuntar"
+            [motivoJuntar]="motivoJuntar"
+            (onReenviar)="handleReenviar()"
+            (onExportar)="exportarProtocolos()"
+            (onJuntar)="mergeOpen = true"
+            (onClear)="limparSelecao()"
+          ></app-batch-actions-bar>
+        }
+
+        <app-attach-document-modal
+          [open]="attachOpen"
+          [clientes]="clientes"
+          (onClose)="attachOpen = false"
+          (onSubmit)="handleAttach($event)"
+        ></app-attach-document-modal>
+
+        <app-receive-document-modal
+          [open]="receiveOpen"
+          [clientes]="clientes"
+          (onClose)="receiveOpen = false"
+          (onSubmit)="handleReceive($event)"
+        ></app-receive-document-modal>
+
+        <app-merge-pdf-modal
+          [open]="mergeOpen"
+          [documentos]="selecionados"
+          [nomeCliente]="nomeClienteFn"
+          (onClose)="mergeOpen = false"
+          (onMerge)="handleMerge($event)"
+        ></app-merge-pdf-modal>
+
+        <app-document-viewer
+          [open]="viewerOpen"
+          [documento]="viewedDoc"
+          [versions]="versions"
+          [showActions]="viewedDoc?.direcao !== DirecaoDocumento.ENTRADA"
+          (onSelectVersion)="selecionarVersao($event)"
+          (onClose)="fecharViewer()"
+          (onResend)="handleSend(viewedDoc)"
+          (onNewVersion)="handleNewVersion()"
+          (onDownload)="handleDownload()"
+          (onReceipt)="toastService.show('Recurso visual: comprovante em breve.', 'info')"
+        ></app-document-viewer>
+      </div>
+    }
+  

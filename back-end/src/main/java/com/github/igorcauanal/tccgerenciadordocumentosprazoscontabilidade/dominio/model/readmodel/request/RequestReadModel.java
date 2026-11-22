@@ -18,6 +18,8 @@ public class RequestReadModel {
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
     private LocalDateTime canceledAt;
+    private long acceptedItems;
+    private int totalItems;
     private BigDecimal progress;
     private List<RequestItemReadModel> items;
 
@@ -30,6 +32,8 @@ public class RequestReadModel {
                             LocalDateTime createdAt,
                             LocalDateTime completedAt,
                             LocalDateTime canceledAt,
+                            long acceptedItems,
+                            int totalItems,
                             BigDecimal progress,
                             List<RequestItemReadModel> items) {
         this.id = id;
@@ -41,6 +45,8 @@ public class RequestReadModel {
         this.createdAt = createdAt;
         this.completedAt = completedAt;
         this.canceledAt = canceledAt;
+        this.acceptedItems = acceptedItems;
+        this.totalItems = totalItems;
         this.progress = progress;
         this.items = items;
     }
@@ -79,6 +85,14 @@ public class RequestReadModel {
 
     public LocalDateTime getCanceledAt() {
         return canceledAt;
+    }
+
+    public long getAcceptedItems() {
+        return acceptedItems;
+    }
+
+    public int getTotalItems() {
+        return totalItems;
     }
 
     public BigDecimal getProgress() {

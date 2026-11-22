@@ -23,6 +23,15 @@ public class RequestResponseDTO {
     private LocalDateTime completedIn;
     private LocalDateTime cancelledIn;
 
+    /** Preenchido somente na resposta de criação da solicitação. */
+    private String publicToken;
+
+    /** Quantidade de itens aceitos na conferência. */
+    private long acceptedItems;
+
+    /** Quantidade total de itens do checklist. */
+    private int totalItems;
+
     private BigDecimal progress;
 
     private List<ChecklistItemResponseDTO> checklist;

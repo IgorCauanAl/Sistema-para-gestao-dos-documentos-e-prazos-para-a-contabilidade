@@ -26,6 +26,7 @@ public final class RequestMapper {
         entity.setCreatedIn(request.getCreatedIn());
         entity.setCompletedIn(request.getCompletedIn());
         entity.setCancelledIn(request.getCancelledIn());
+        entity.setPublicTokenHash(request.getPublicTokenHash());
 
         // setar o back-reference (request)
         for (ChecklistItem item : request.getChecklist()) {
@@ -57,7 +58,8 @@ public final class RequestMapper {
                 entity.getCompletedIn(),
                 entity.getCreatedIn(),
                 entity.getStatus(),
-                items
+                items,
+                entity.getPublicTokenHash()
         );
     }
 }

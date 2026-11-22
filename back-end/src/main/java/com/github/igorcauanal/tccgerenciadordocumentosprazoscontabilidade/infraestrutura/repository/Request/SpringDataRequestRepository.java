@@ -19,4 +19,8 @@ public interface SpringDataRequestRepository extends JpaRepository<RequestEntity
     @EntityGraph(attributePaths = "checklist")
     Optional<RequestEntity> findById(Long id);
 
+    //Busca pelo hash do link público; nunca pelo token cru.
+    @EntityGraph(attributePaths = "checklist")
+    Optional<RequestEntity> findByPublicTokenHash(String publicTokenHash);
+
 }

@@ -24,6 +24,7 @@ public final class DocumentMapper {
         entity.setFileFormat(document.getFileFormat());
         entity.setFileName(document.getFileName());
         entity.setStoragePath(document.getStoragePath());
+        entity.setVerified(document.isVerified());
         entity.setCreatedIn(document.getCreatedIn());
         return entity;
     }
@@ -46,6 +47,7 @@ public final class DocumentMapper {
                 entity.getFileFormat(),
                 entity.getFileName(),
                 entity.getStoragePath(),
+                entity.isVerified(),
                 entity.getCreatedIn()
         );
     }

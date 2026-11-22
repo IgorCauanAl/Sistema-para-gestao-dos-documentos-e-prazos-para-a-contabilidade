@@ -33,15 +33,21 @@ public class RequestQueryAdapter implements RequestQueryPort {
     @Override
     public List<RequestListItemReadModel> findByCustomerId(Long customerId) {
         return repository.findByCustomerId(customerId).stream()
-                .map(r -> new RequestListItemReadModel(
-                        r.getId(),
-                        r.getCustomerId(),
-                        r.getTitle(),
-                        r.getCompetence(),
-                        r.getDeadline(),
-                        r.getStatus(),
-                        calculateProgress(r.getChecklist())
-                ))
+                .map(r -> {
+                    long accepted = countAccepted(r.getChecklist());
+                    int total = countTotal(r.getChecklist());
+                    return new RequestListItemReadModel(
+                            r.getId(),
+                            r.getCustomerId(),
+                            r.getTitle(),
+                            r.getCompetence(),
+                            r.getDeadline(),
+                            r.getStatus(),
+                            accepted,
+                            total,
+                            calculateProgress(accepted, total)
+                    );
+                })
                 .toList();
     }
 
@@ -52,6 +58,8 @@ public class RequestQueryAdapter implements RequestQueryPort {
                         .map(this::toItemReadModel)
                         .toList();
 
+        long accepted = countAccepted(entity.getChecklist());
+        int total = countTotal(entity.getChecklist());
         return new RequestReadModel(
                 entity.getId(),
                 entity.getCustomerId(),
@@ -62,7 +70,9 @@ public class RequestQueryAdapter implements RequestQueryPort {
                 entity.getCreatedIn(),
                 entity.getCompletedIn(),
                 entity.getCancelledIn(),
-                calculateProgress(entity.getChecklist()),
+                accepted,
+                total,
+                calculateProgress(accepted, total),
                 items
         );
     }
@@ -81,14 +91,25 @@ public class RequestQueryAdapter implements RequestQueryPort {
         );
     }
 
-    private BigDecimal calculateProgress(List<ChecklistItemEntity> checklist) {
-        if (checklist == null || checklist.isEmpty()) {
-            return BigDecimal.ZERO;
+    private long countAccepted(List<ChecklistItemEntity> checklist) {
+        if (checklist == null) {
+            return 0;
         }
-        long accepted = checklist.stream()
+        return checklist.stream()
                 .filter(i -> i.getStatus() == StatusCheckList.ACEITO)
                 .count();
+    }
+
+    private int countTotal(List<ChecklistItemEntity> checklist) {
+        return checklist == null ? 0 : checklist.size();
+    }
+
+    /** Mesma regra do domínio: aceitos / total, arredondado em 4 casas. */
+    private BigDecimal calculateProgress(long accepted, int total) {
+        if (total == 0) {
+            return BigDecimal.ZERO;
+        }
         return BigDecimal.valueOf(accepted)
-                .divide(BigDecimal.valueOf(checklist.size()), 4, RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(total), 4, RoundingMode.HALF_UP);
     }
 }

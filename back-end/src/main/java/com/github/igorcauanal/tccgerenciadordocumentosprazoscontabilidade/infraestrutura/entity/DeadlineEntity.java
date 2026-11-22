@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Getter
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "prazo")
+@Table(name = "deadline")
 public class DeadlineEntity {
 
     //Fábrica

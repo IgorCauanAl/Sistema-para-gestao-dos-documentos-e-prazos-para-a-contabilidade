@@ -5,6 +5,7 @@ import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.domini
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.Customer.Customer;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.in.Customer.CustomerServicePort;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.Customer.CustomerRepositoryPort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.util.CnpjFormatter;
 
 import java.util.List;
 
@@ -23,11 +24,16 @@ public class CustomerService implements CustomerServicePort {
                              String email,
                              String fullAddress) {
 
-        customerRepository.findByCnpj(cnpj).ifPresent(existing -> {
-            throw new AlreadyRegisteredCustomerException(cnpj);
-        });
+        String formattedCnpj = CnpjFormatter.format(cnpj);
 
-        Customer customer = Customer.create(cnpj, legalName, responsibleName, email, fullAddress);
+        // Consulta também a forma crua para não duplicar registros legados gravados sem máscara.
+        customerRepository.findByCnpj(formattedCnpj)
+                .or(() -> customerRepository.findByCnpj(cnpj))
+                .ifPresent(existing -> {
+                    throw new AlreadyRegisteredCustomerException(formattedCnpj);
+                });
+
+        Customer customer = Customer.create(formattedCnpj, legalName, responsibleName, email, fullAddress);
         return customerRepository.save(customer);
     }
 
