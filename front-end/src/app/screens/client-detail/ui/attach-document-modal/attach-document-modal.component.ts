@@ -8,20 +8,29 @@ import {
   SimpleChanges,
   ViewChild,
 } from '@angular/core';
-import { LucideBuilding2, LucideFileText, LucideUploadCloud, LucideX } from '@lucide/angular';
+import {
+  LucideBuilding2,
+  LucideFileText,
+  LucideMail,
+  LucideMessageCircle,
+  LucideUploadCloud,
+  LucideX,
+} from '@lucide/angular';
 
 import { PrazoFieldsComponent } from '../../../../core/components/ui/prazo-fields/prazo-fields.component';
 import { formatCnpj } from '../../../../core/domain/cnpj';
 import { paraBR } from '../../../../core/domain/data';
 import {
+  ANOS,
   ANTECEDENCIA_PADRAO,
   CANAIS_ENVIO,
   extensaoDe,
   FORMATOS_ACEITOS,
+  MESES,
   TIPOS_DOCUMENTO,
 } from '../../../../core/domain/documento';
 import type { Cliente, DocumentoNovo } from '../../../../core/domain/models';
-import { ToastService } from '../../../../core/services/toast.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { ClientSelectComponent } from '../../../documents/ui/client-select/client-select.component';
 
 const formatSize = (bytes: number): string => {
@@ -37,6 +46,8 @@ const formatSize = (bytes: number): string => {
     ClientSelectComponent,
     LucideBuilding2,
     LucideFileText,
+    LucideMail,
+    LucideMessageCircle,
     LucideUploadCloud,
     LucideX,
   ],
@@ -65,11 +76,12 @@ export class AttachDocumentModalComponent implements OnChanges {
   saving = false;
 
   readonly canais = CANAIS_ENVIO;
+  readonly competencias = ANOS.flatMap((ano) => MESES.map((mes) => `${mes}/${ano}`));
   readonly tiposDocument = TIPOS_DOCUMENTO.map((t) => t.nome);
   readonly formatCnpj = formatCnpj;
   readonly formatSize = formatSize;
 
-  constructor(private toastService: ToastService) {}
+  constructor(private readonly notification: NotificationService) {}
 
   get comSelecaoDeCliente(): boolean {
     return Array.isArray(this.clientes);
@@ -105,7 +117,7 @@ export class AttachDocumentModalComponent implements OnChanges {
     if (!(FORMATOS_ACEITOS as readonly string[]).includes(ext)) {
       this.file = null;
       this.erro = `Formato ".${ext}" não suportado. Use: ${FORMATOS_ACEITOS.map((f) => f.toUpperCase()).join(', ')}.`;
-      this.toastService.show(this.erro, 'error');
+      this.notification.error(this.erro);
       return;
     }
     this.erro = '';
@@ -136,7 +148,7 @@ export class AttachDocumentModalComponent implements OnChanges {
     this.onClose.emit();
   }
 
-  handleSubmit(enviarAgora: boolean, event?: Event): void {
+  async handleSubmit(enviarAgora: boolean, event?: Event): Promise<void> {
     event?.preventDefault();
     if (this.saving) return;
 
@@ -146,19 +158,28 @@ export class AttachDocumentModalComponent implements OnChanges {
 
     if (this.comSelecaoDeCliente && !cliente) {
       this.erro = 'Selecione o cliente para anexar o documento.';
-      this.toastService.show(this.erro, 'error');
+      this.notification.error(this.erro);
       return;
     }
     if (!this.file) {
       this.erro = 'Selecione um arquivo para anexar.';
-      this.toastService.show(this.erro, 'error');
+      this.notification.error(this.erro);
       return;
     }
     if (!cliente) return;
 
-    if (enviarAgora && !confirm(`Confirmar envio do documento "${this.file.name}" para ${cliente.razaoSocial}?`)) {
-      this.toastService.show('Envio do documento cancelado.', 'info');
-      return;
+    if (enviarAgora) {
+      const confirmado = await this.notification.confirm({
+        title: 'Enviar documento agora?',
+        message: `Confirmar envio do documento "${this.file.name}" para ${cliente.razaoSocial}?`,
+        confirmLabel: 'Enviar agora',
+        cancelLabel: 'Cancelar',
+        danger: false,
+      });
+      if (!confirmado) {
+        this.notification.info('Envio do documento cancelado.');
+        return;
+      }
     }
 
     this.erro = '';

@@ -1,58 +1,65 @@
+<header
+  class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-6 flex items-center justify-between sticky top-0 z-10"
+>
+  <div class="flex items-center gap-12">
+    <app-logo label="ContaDash"></app-logo>
 
-    <header
-      class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/50 px-6 flex items-center justify-between sticky top-0 z-10"
-    >
-      <div class="flex items-center gap-12">
-        <app-logo label="ContaDash"></app-logo>
-
-        <nav class="hidden lg:flex p-1.5 bg-slate-100 rounded-full gap-1">
-          @for (tab of tabs; track tab.id) {
-            <button
-              (click)="router.navigateByUrl(tab.path)"
-              [attr.aria-current]="isTabActive(tab) ? 'page' : null"
-              class="px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 transition-all"
-              [class]="
-                isTabActive(tab)
-                  ? 'bg-slate-800 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-              "
-            >
-              @if (tab.icon === 'dashboard') {
-                <svg lucideLayoutDashboard [size]="16"></svg>
-              }
-              {{ tab.label }}
-            </button>
-          }
-        </nav>
-      </div>
-
-      <div class="flex items-center gap-4 md:gap-6">
-        <div class="hidden md:flex items-center gap-2 text-slate-500 text-sm">
-          <svg lucideCalendar [size]="16"></svg>
-          <span>Quinta-feira, 8 Out 2026 - 09:40 AM</span>
-        </div>
-        <div class="hidden sm:flex flex-col items-end leading-tight">
-          <span class="text-sm font-semibold text-slate-700">{{ auth.usuario?.nome ?? 'Usuário' }}</span>
-          <span class="text-xs text-slate-400">Contador</span>
-        </div>
-        <div
-          class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center shrink-0"
-        >
-          <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=e2e8f0"
-            alt="User avatar"
-            class="w-full h-full object-cover"
-          />
-        </div>
+    <nav class="hidden lg:flex p-1.5 bg-slate-100 rounded-full gap-1">
+      @for (tab of tabs; track tab.id) {
         <button
-          type="button"
-          (click)="sair()"
-          aria-label="Sair do sistema"
-          title="Sair do sistema"
-          class="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          (click)="router.navigateByUrl(tab.path)"
+          [attr.aria-current]="isTabActive(tab) ? 'page' : null"
+          class="px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 transition-all"
+          [class]="
+            isTabActive(tab)
+              ? 'bg-slate-800 text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+          "
         >
-          <svg lucideLogOut [size]="18"></svg>
+          @if (tab.icon === 'dashboard') {
+            <svg lucideLayoutDashboard [size]="16"></svg>
+          }
+          {{ tab.label }}
         </button>
+      }
+    </nav>
+  </div>
+
+  <div class="flex items-center gap-4 md:gap-6">
+    @if (auth.usuario$ | async; as usuario) {
+      <div
+        class="hidden md:flex items-center gap-2 text-slate-500 text-sm"
+        [attr.title]="
+          usuario.dataReferencia
+            ? 'Referência do servidor: ' + (usuario.dataReferencia | date: 'dd/MM/yyyy HH:mm')
+            : null
+        "
+      >
+        <svg lucideCalendar [size]="16"></svg>
+        <span>{{ hoje | date: 'EEEE, d MMM y - HH:mm' }}</span>
       </div>
-    </header>
-  
+      <div class="hidden sm:flex flex-col items-end leading-tight">
+        <span class="text-sm font-semibold text-slate-700">{{ usuario.nome }}</span>
+        <span class="text-xs text-slate-400">{{ usuario.perfil }}</span>
+      </div>
+      <div
+        class="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center shrink-0"
+      >
+        <img
+          [src]="avatarUrl(usuario.nome)"
+          [attr.alt]="'Avatar de ' + usuario.nome"
+          class="w-full h-full object-cover"
+        />
+      </div>
+      <button
+        type="button"
+        (click)="sair()"
+        aria-label="Sair do sistema"
+        title="Sair do sistema"
+        class="p-2.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+      >
+        <svg lucideLogOut [size]="18"></svg>
+      </button>
+    }
+  </div>
+</header>

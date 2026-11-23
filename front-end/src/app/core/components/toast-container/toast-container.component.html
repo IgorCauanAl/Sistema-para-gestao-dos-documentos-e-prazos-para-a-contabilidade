@@ -6,6 +6,8 @@
         >
           @if (toast.type === 'error') {
             <svg lucideAlertTriangle [size]="20" class="text-red-600"></svg>
+          } @else if (toast.type === 'warning') {
+            <svg lucideAlertTriangle [size]="20" class="text-amber-500"></svg>
           } @else if (toast.type === 'info') {
             <svg lucideInfo [size]="20" class="text-indigo-500"></svg>
           } @else {

@@ -98,11 +98,25 @@
                 </select>
               </div>
 
+              <div>
+                <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="attach-competencia">
+                  Competência
+                </label>
+                <select
+                  id="attach-competencia"
+                  class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm text-slate-700"
+                  [value]="competencia"
+                  (change)="competencia = $any($event.target).value"
+                >
+                  @for (valor of competencias; track valor) {
+                    <option [value]="valor">{{ valor }}</option>
+                  }
+                </select>
+              </div>
+
               <app-prazo-fields
-                [competencia]="competencia"
                 [vencimento]="vencimento"
                 [diasAntecedencia]="diasAntecedencia"
-                (onCompetenciaChange)="competencia = $event"
                 (onVencimentoChange)="vencimento = $event"
                 (onDiasAntecedenciaChange)="diasAntecedencia = $event"
               ></app-prazo-fields>
@@ -110,19 +124,27 @@
               <div>
                 <p class="block text-sm font-semibold mb-2 text-slate-700">Canal de envio</p>
                 <div class="flex gap-2">
-                  @for (canalOpcao of canais; track canalOpcao.valor) {
+                  @for (canalOpcao of canais; track canalOpcao) {
                     <button
                       type="button"
-                      (click)="canal = canalOpcao.valor"
+                      (click)="canal = canalOpcao"
                       class="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors"
-                      [class.bg-indigo-50]="canal === canalOpcao.valor"
-                      [class.border-indigo-200]="canal === canalOpcao.valor"
-                      [class.text-indigo-700]="canal === canalOpcao.valor"
-                      [class.bg-white]="canal !== canalOpcao.valor"
-                      [class.border-slate-200]="canal !== canalOpcao.valor"
-                      [class.text-slate-600]="canal !== canalOpcao.valor"
+                      [class.bg-indigo-50]="canal === canalOpcao"
+                      [class.border-indigo-200]="canal === canalOpcao"
+                      [class.text-indigo-700]="canal === canalOpcao"
+                      [class.bg-white]="canal !== canalOpcao"
+                      [class.border-slate-200]="canal !== canalOpcao"
+                      [class.text-slate-600]="canal !== canalOpcao"
                     >
-                      <svg [lucideIcon]="canalOpcao.icone" [size]="16"></svg>{{ canalOpcao.rotulo }}
+                      @switch (canalOpcao) {
+                        @case ('WhatsApp') {
+                          <svg lucideMessageCircle [size]="16"></svg>
+                        }
+                        @case ('E-mail') {
+                          <svg lucideMail [size]="16"></svg>
+                        }
+                      }
+                      {{ canalOpcao }}
                     </button>
                   }
                 </div>

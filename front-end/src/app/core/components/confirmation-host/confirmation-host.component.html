@@ -1,0 +1,12 @@
+@if (confirmation.request$ | async; as request) {
+  <app-confirm-dialog
+    [open]="true"
+    [title]="request.title"
+    [message]="request.message"
+    [confirmLabel]="request.confirmLabel"
+    [cancelLabel]="request.cancelLabel"
+    [danger]="request.danger"
+    (onClose)="confirmation.cancelar()"
+    (onConfirm)="confirmation.confirmar()"
+  ></app-confirm-dialog>
+}

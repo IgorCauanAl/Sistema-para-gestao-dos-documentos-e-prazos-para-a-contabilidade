@@ -1,5 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out;
 
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.TokenValidation;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.User;
 
 /**
@@ -15,4 +16,18 @@ public interface TokenServicePort {
      * Retorna uma string vazia quando o token é inválido ou expirado.
      */
     String validateToken(String token);
+
+    /**
+     * Valida o token detalhando o motivo de uma eventual rejeição
+     * (expirado ou inválido), para que a camada web responda adequadamente.
+     */
+    default TokenValidation validate(String token) {
+        String subject = validateToken(token);
+
+        if (subject == null || subject.isBlank()) {
+            return TokenValidation.invalid();
+        }
+
+        return TokenValidation.valid(subject);
+    }
 }

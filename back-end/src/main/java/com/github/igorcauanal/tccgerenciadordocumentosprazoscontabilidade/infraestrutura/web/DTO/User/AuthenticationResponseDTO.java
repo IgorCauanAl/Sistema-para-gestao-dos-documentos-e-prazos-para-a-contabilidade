@@ -6,15 +6,30 @@ public class AuthenticationResponseDTO {
     private String name;
     private String email;
     private String token;
+    private String perfil;
+    private String dataReferencia;
 
     public AuthenticationResponseDTO() {
     }
 
     public AuthenticationResponseDTO(Long id, String name, String email, String token) {
+        this(id, name, email, token, "Contador", null);
+    }
+
+    public AuthenticationResponseDTO(
+            Long id,
+            String name,
+            String email,
+            String token,
+            String perfil,
+            String dataReferencia
+    ) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.token = token;
+        this.perfil = perfil;
+        this.dataReferencia = dataReferencia;
     }
 
     public Long getId() {
@@ -47,5 +62,21 @@ public class AuthenticationResponseDTO {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getPerfil() {
+        return perfil;
+    }
+
+    public void setPerfil(String perfil) {
+        this.perfil = perfil;
+    }
+
+    public String getDataReferencia() {
+        return dataReferencia;
+    }
+
+    public void setDataReferencia(String dataReferencia) {
+        this.dataReferencia = dataReferencia;
     }
 }

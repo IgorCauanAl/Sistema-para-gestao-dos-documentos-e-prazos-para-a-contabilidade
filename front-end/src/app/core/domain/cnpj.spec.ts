@@ -12,8 +12,8 @@ describe('cnpj utils', () => {
   });
 
   it('valida tamanho', () => {
-    expect(isValidCnpj('86.489.351/0001-23')).toBeTrue();
-    expect(isValidCnpj('11.111.111/1111-1')).toBeFalse();
+    expect(isValidCnpj('86.489.351/0001-23')).toBe(true);
+    expect(isValidCnpj('11.111.111/1111-1')).toBe(false);
   });
 
   it('extrai dígitos', () => {

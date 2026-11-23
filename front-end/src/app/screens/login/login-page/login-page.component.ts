@@ -16,7 +16,8 @@ import {
 
 import { LogoComponent } from '../../../core/components/logo/logo.component';
 import { AuthService } from '../../../core/services/auth.service';
-import { ToastService } from '../../../core/services/toast.service';
+import { SessionExpirationService } from '../../../core/services/session-expiration.service';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-login-page',
@@ -53,13 +54,17 @@ export class LoginPageComponent implements OnInit {
     private readonly auth: AuthService,
     private readonly router: Router,
     private readonly route: ActivatedRoute,
-    private readonly toastService: ToastService
+    private readonly notification: NotificationService,
+    private readonly sessionExpiration: SessionExpirationService
   ) {}
 
   ngOnInit(): void {
-    const retorno = this.route.snapshot.queryParamMap.get('returnUrl');
+    const retornoQuery = this.route.snapshot.queryParamMap.get('returnUrl');
+    const retornoSalvo = this.sessionExpiration.consumirUrlRetorno();
     this.returnUrl =
-      retorno && retorno.startsWith('/') && !retorno.startsWith('/login') ? retorno : '/';
+      this.urlRetornoValida(retornoQuery) ??
+      this.urlRetornoValida(retornoSalvo) ??
+      '/';
 
     if (this.auth.autenticado) {
       void this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
@@ -86,7 +91,7 @@ export class LoginPageComponent implements OnInit {
     this.carregando = true;
     try {
       await this.auth.login(this.email, this.senha, this.lembrarDeMim);
-      this.toastService.show('Login realizado com sucesso.');
+      this.notification.success('Login realizado com sucesso.');
       await this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
     } catch (error) {
       this.erro = error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.';
@@ -97,5 +102,9 @@ export class LoginPageComponent implements OnInit {
 
   private get emailValido(): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email.trim());
+  }
+
+  private urlRetornoValida(url: string | null): string | null {
+    return url && url.startsWith('/') && !url.startsWith('/login') ? url : null;
   }
 }

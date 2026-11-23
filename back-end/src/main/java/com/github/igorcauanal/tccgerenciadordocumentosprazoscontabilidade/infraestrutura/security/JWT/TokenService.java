@@ -4,6 +4,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.exceptions.TokenExpiredException;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.TokenValidation;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.User;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.TokenServicePort;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,15 +46,32 @@ public class TokenService implements TokenServicePort {
 
     @Override
     public String validateToken(String token) {
+        return validate(token).subject();
+    }
+
+    @Override
+    public TokenValidation validate(String token) {
+        if (token == null || token.isBlank()) {
+            return TokenValidation.invalid();
+        }
+
         try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
-            return JWT.require(algorithm)
+            String subject = JWT.require(algorithm)
                     .withIssuer(ISSUER)
                     .build()
                     .verify(token)
                     .getSubject();
+
+            if (subject == null || subject.isBlank()) {
+                return TokenValidation.invalid();
+            }
+
+            return TokenValidation.valid(subject);
+        } catch (TokenExpiredException exception) {
+            return TokenValidation.expired();
         } catch (JWTVerificationException exception) {
-            return "";
+            return TokenValidation.invalid();
         }
     }
 }

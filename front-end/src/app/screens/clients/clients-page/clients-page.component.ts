@@ -13,7 +13,7 @@ import {
   emptyClienteForm,
   type ClienteForm,
 } from '../ui/client-form-modal/client-form-modal.component';
-import { ConfirmDialogComponent } from '../../solicitacoes/ui/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogComponent } from '../../../core/components/ui/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-clients-page',

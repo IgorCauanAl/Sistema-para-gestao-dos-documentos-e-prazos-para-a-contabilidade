@@ -1,5 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security.JWT;
 
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.TokenValidationStatus;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,5 +37,20 @@ class TokenServiceTest {
     @Test
     void shouldReturnEmptySubjectWhenTokenIsInvalid() {
         assertThat(tokenService.validateToken("token-invalido")).isEmpty();
+    }
+
+    @Test
+    void shouldReportExpiredStatusWhenTokenIsExpired() {
+        ReflectionTestUtils.setField(tokenService, "expirationMillis", -1_000L);
+        String token = tokenService.generateToken(user);
+
+        assertThat(tokenService.validate(token).status())
+                .isEqualTo(TokenValidationStatus.EXPIRED);
+    }
+
+    @Test
+    void shouldReportInvalidStatusWhenTokenIsMalformed() {
+        assertThat(tokenService.validate("token-invalido").status())
+                .isEqualTo(TokenValidationStatus.INVALID);
     }
 }

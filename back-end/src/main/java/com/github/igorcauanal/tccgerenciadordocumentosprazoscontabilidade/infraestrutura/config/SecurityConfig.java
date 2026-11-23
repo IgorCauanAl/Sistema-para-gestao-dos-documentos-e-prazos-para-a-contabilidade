@@ -1,14 +1,17 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.config;
 
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.TokenServicePort;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security.RestAuthenticationEntryPoint;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security.SecurityFilter;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security.SecurityRoles;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.web.DTO.Error.ApiErrorResponseDTO;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -29,7 +32,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -49,6 +51,11 @@ public class SecurityConfig {
             UserDetailsService userDetailsService
     ) {
         return new SecurityFilter(tokenService, userDetailsService);
+    }
+
+    @Bean
+    public RestAuthenticationEntryPoint restAuthenticationEntryPoint(ObjectMapper objectMapper) {
+        return new RestAuthenticationEntryPoint(objectMapper);
     }
 
     // Evita registro duplo do filtro: cadeia servlet e cadeia de segurança.
@@ -80,6 +87,7 @@ public class SecurityConfig {
             HttpSecurity http,
             CorsConfigurationSource corsConfigurationSource,
             SecurityFilter securityFilter,
+            RestAuthenticationEntryPoint authenticationEntryPoint,
             ObjectMapper objectMapper
     ) throws Exception {
 
@@ -101,10 +109,16 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((request, response, exception) ->
-                                writeError(response, objectMapper, HttpServletResponse.SC_UNAUTHORIZED, "Nao autenticado"))
+                        .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler((request, response, exception) ->
-                                writeError(response, objectMapper, HttpServletResponse.SC_FORBIDDEN, "Acesso negado"))
+                                writeError(
+                                        response,
+                                        objectMapper,
+                                        HttpStatus.FORBIDDEN,
+                                        "ACCESS_DENIED",
+                                        "Você não tem permissão para realizar esta ação.",
+                                        request.getRequestURI()
+                                ))
                 );
 
         return http.build();
@@ -113,12 +127,17 @@ public class SecurityConfig {
     private static void writeError(
             HttpServletResponse response,
             ObjectMapper objectMapper,
-            int status,
-            String message
+            HttpStatus status,
+            String code,
+            String message,
+            String path
     ) throws IOException {
-        response.setStatus(status);
+        response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        objectMapper.writeValue(response.getWriter(), Map.of("message", message));
+        objectMapper.writeValue(
+                response.getWriter(),
+                ApiErrorResponseDTO.of(status, code, message, path)
+        );
     }
 }

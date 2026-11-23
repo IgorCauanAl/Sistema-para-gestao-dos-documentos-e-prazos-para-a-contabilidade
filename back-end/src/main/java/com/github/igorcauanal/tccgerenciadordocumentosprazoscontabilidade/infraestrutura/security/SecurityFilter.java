@@ -1,5 +1,6 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security;
 
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.TokenValidation;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.TokenServicePort;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -48,16 +49,21 @@ public class SecurityFilter extends OncePerRequestFilter {
             return;
         }
 
-        String subject = tokenService.validateToken(token);
+        TokenValidation validation = tokenService.validate(token);
 
-        if (subject == null || subject.isBlank()) {
+        if (!validation.isValid()) {
             SecurityContextHolder.clearContext();
+            // Informa ao AuthenticationEntryPoint por que a autenticação falhou.
+            request.setAttribute(
+                    RestAuthenticationEntryPoint.AUTH_FAILURE_ATTRIBUTE,
+                    validation.status()
+            );
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(subject);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(validation.subject());
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(

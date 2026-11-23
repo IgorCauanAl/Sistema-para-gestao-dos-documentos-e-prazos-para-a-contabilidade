@@ -17,7 +17,7 @@ import { PrazoRefreshService } from '../../../core/services/prazo-refresh.servic
 import { PrazoService } from '../../../core/services/prazo.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AttachDocumentModalComponent } from '../../client-detail/ui/attach-document-modal/attach-document-modal.component';
-import { ConfirmDialogComponent } from '../../solicitacoes/ui/confirm-dialog/confirm-dialog.component';
+import { ConfirmDialogComponent } from '../../../core/components/ui/confirm-dialog/confirm-dialog.component';
 import { PrazoDetailPanelComponent } from '../ui/prazo-detail-panel/prazo-detail-panel.component';
 import { PrazoFiltersComponent, emptyPrazoFilters, type PrazoFiltersModel } from '../ui/prazo-filters/prazo-filters.component';
 import { PrazoSummaryCardsComponent, type PrazoContagens } from '../ui/prazo-summary-cards/prazo-summary-cards.component';

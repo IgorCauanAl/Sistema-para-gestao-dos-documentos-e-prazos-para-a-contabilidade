@@ -1,5 +1,7 @@
 package com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.infraestrutura.security;
 
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.TokenValidation;
+import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.model.User.TokenValidationStatus;
 import com.github.igorcauanal.tccgerenciadordocumentosprazoscontabilidade.dominio.ports.out.TokenServicePort;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +30,7 @@ class SecurityFilterTest {
     void shouldAuthenticateWithoutCreatingSessionWhenBearerTokenIsValid() throws Exception {
         TokenServicePort tokenService = mock(TokenServicePort.class);
         UserDetailsService userDetailsService = mock(UserDetailsService.class);
-        when(tokenService.validateToken("token-valido")).thenReturn(EMAIL);
+        when(tokenService.validate("token-valido")).thenReturn(TokenValidation.valid(EMAIL));
         when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(
                 User.withUsername(EMAIL)
                         .password("hash")
@@ -53,7 +55,7 @@ class SecurityFilterTest {
     void shouldNotAuthenticateWhenTokenIsInvalid() throws Exception {
         TokenServicePort tokenService = mock(TokenServicePort.class);
         UserDetailsService userDetailsService = mock(UserDetailsService.class);
-        when(tokenService.validateToken("invalido")).thenReturn("");
+        when(tokenService.validate("invalido")).thenReturn(TokenValidation.invalid());
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer invalido");
@@ -63,6 +65,25 @@ class SecurityFilterTest {
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         assertThat(request.getSession(false)).isNull();
+        assertThat(request.getAttribute(RestAuthenticationEntryPoint.AUTH_FAILURE_ATTRIBUTE))
+                .isEqualTo(TokenValidationStatus.INVALID);
+    }
+
+    @Test
+    void shouldExposeExpiredStatusWhenTokenIsExpired() throws Exception {
+        TokenServicePort tokenService = mock(TokenServicePort.class);
+        UserDetailsService userDetailsService = mock(UserDetailsService.class);
+        when(tokenService.validate("expirado")).thenReturn(TokenValidation.expired());
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Authorization", "Bearer expirado");
+
+        new SecurityFilter(tokenService, userDetailsService)
+                .doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(request.getAttribute(RestAuthenticationEntryPoint.AUTH_FAILURE_ATTRIBUTE))
+                .isEqualTo(TokenValidationStatus.EXPIRED);
     }
 
     @Test
