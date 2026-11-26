@@ -17,16 +17,6 @@ export const Recorrencia = {
   ANUAL: 'Anual',
 } as const;
 
-export const RegraDiaNaoUtil = {
-  ANTECIPAR: 'ANTECIPAR',
-  POSTERGAR: 'POSTERGAR',
-} as const;
-
-export const regraDiaNaoUtilLabel: Record<string, string> = {
-  [RegraDiaNaoUtil.ANTECIPAR]: 'Antecipar para o dia útil anterior',
-  [RegraDiaNaoUtil.POSTERGAR]: 'Postergar para o próximo dia útil',
-};
-
 export const StatusPrazo = {
   PENDENTE: 'PENDENTE',
   EM_ANDAMENTO: 'EM_ANDAMENTO',
@@ -78,13 +68,23 @@ export const ETAPAS_PADRAO = [
   'Enviar ao cliente',
 ];
 
+/** Ordem das etapas aceitas por PATCH /deadlines/{id}/stage (RF58.1). */
+export const ESTAGIOS_BACKEND = [
+  'RECEBIDO',
+  'EM_ANDAMENTO',
+  'AGUARDANDO_CLIENTE',
+  'AGUARDANDO_ORGAO',
+  'CONCLUIDO',
+] as const;
+
+export type EstagioBackend = (typeof ESTAGIOS_BACKEND)[number];
+
 export interface ObrigacaoModelo {
   id: string;
   nome: string;
   categoria: string;
   recorrencia: string;
   diaVencimento: number;
-  regraDiaNaoUtil: string;
   antecedenciaAlertaDias: number;
   etapas: string[];
 }
@@ -96,7 +96,6 @@ export const OBRIGACOES_MODELO: ObrigacaoModelo[] = [
     categoria: Categoria.TRABALHISTA,
     recorrencia: Recorrencia.MENSAL,
     diaVencimento: 7,
-    regraDiaNaoUtil: RegraDiaNaoUtil.ANTECIPAR,
     antecedenciaAlertaDias: 7,
     etapas: ETAPAS_PADRAO,
   },
@@ -106,7 +105,6 @@ export const OBRIGACOES_MODELO: ObrigacaoModelo[] = [
     categoria: Categoria.TRABALHISTA,
     recorrencia: Recorrencia.MENSAL,
     diaVencimento: 15,
-    regraDiaNaoUtil: RegraDiaNaoUtil.ANTECIPAR,
     antecedenciaAlertaDias: 7,
     etapas: ETAPAS_PADRAO,
   },
@@ -116,7 +114,6 @@ export const OBRIGACOES_MODELO: ObrigacaoModelo[] = [
     categoria: Categoria.FISCAL,
     recorrencia: Recorrencia.MENSAL,
     diaVencimento: 20,
-    regraDiaNaoUtil: RegraDiaNaoUtil.ANTECIPAR,
     antecedenciaAlertaDias: 7,
     etapas: ETAPAS_PADRAO,
   },
@@ -126,7 +123,6 @@ export const OBRIGACOES_MODELO: ObrigacaoModelo[] = [
     categoria: Categoria.FISCAL,
     recorrencia: Recorrencia.MENSAL,
     diaVencimento: 15,
-    regraDiaNaoUtil: RegraDiaNaoUtil.ANTECIPAR,
     antecedenciaAlertaDias: 7,
     etapas: ETAPAS_PADRAO,
   },
@@ -136,7 +132,6 @@ export const OBRIGACOES_MODELO: ObrigacaoModelo[] = [
     categoria: Categoria.TRABALHISTA,
     recorrencia: Recorrencia.MENSAL,
     diaVencimento: 5,
-    regraDiaNaoUtil: RegraDiaNaoUtil.ANTECIPAR,
     antecedenciaAlertaDias: 7,
     etapas: ETAPAS_PADRAO,
   },
@@ -146,7 +141,6 @@ export const OBRIGACOES_MODELO: ObrigacaoModelo[] = [
     categoria: Categoria.CONTABIL,
     recorrencia: Recorrencia.MENSAL,
     diaVencimento: 10,
-    regraDiaNaoUtil: RegraDiaNaoUtil.POSTERGAR,
     antecedenciaAlertaDias: 7,
     etapas: ETAPAS_PADRAO,
   },
@@ -154,22 +148,6 @@ export const OBRIGACOES_MODELO: ObrigacaoModelo[] = [
 
 export const modeloPorId = (id: string): ObrigacaoModelo | null =>
   OBRIGACOES_MODELO.find((modelo) => modelo.id === id) ?? null;
-
-export const FERIADOS_2026 = [
-  { id: 1, nome: 'Confraternização Universal', data: '01/01/2026' },
-  { id: 2, nome: 'Carnaval', data: '16/02/2026' },
-  { id: 3, nome: 'Carnaval', data: '17/02/2026' },
-  { id: 4, nome: 'Sexta-feira Santa', data: '03/04/2026' },
-  { id: 5, nome: 'Tiradentes', data: '21/04/2026' },
-  { id: 6, nome: 'Dia do Trabalho', data: '01/05/2026' },
-  { id: 7, nome: 'Corpus Christi', data: '04/06/2026' },
-  { id: 8, nome: 'Independência do Brasil', data: '07/09/2026' },
-  { id: 9, nome: 'Nossa Senhora Aparecida', data: '12/10/2026' },
-  { id: 10, nome: 'Finados', data: '02/11/2026' },
-  { id: 11, nome: 'Proclamação da República', data: '15/11/2026' },
-  { id: 12, nome: 'Consciência Negra', data: '20/11/2026' },
-  { id: 13, nome: 'Natal', data: '25/12/2026' },
-];
 
 export const iniciarDia = (d: Date): Date => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
@@ -181,29 +159,6 @@ export const addDias = (d: Date, n: number): Date => {
 
 export const diasEntre = (a: Date, b: Date): number =>
   Math.round((iniciarDia(a).getTime() - iniciarDia(b).getTime()) / 86400000);
-
-export const ehFimDeSemana = (d: Date): boolean => d.getDay() === 0 || d.getDay() === 6;
-
-export const feriadoEm = (
-  d: Date,
-  feriados: ReadonlyArray<{ nome: string; data: string }> = FERIADOS_2026
-) => feriados.find((feriado) => feriado.data === formatarData(d)) ?? null;
-
-export const ehDiaUtil = (
-  d: Date,
-  feriados: ReadonlyArray<{ nome: string; data: string }> = FERIADOS_2026
-): boolean => !ehFimDeSemana(d) && !feriadoEm(d, feriados);
-
-export const ajustarParaDiaUtil = (
-  d: Date,
-  regra: string = RegraDiaNaoUtil.ANTECIPAR,
-  feriados: ReadonlyArray<{ nome: string; data: string }> = FERIADOS_2026
-): Date => {
-  const passo = regra === RegraDiaNaoUtil.POSTERGAR ? 1 : -1;
-  let atual = iniciarDia(d);
-  while (!ehDiaUtil(atual, feriados)) atual = addDias(atual, passo);
-  return atual;
-};
 
 export const inicioDaSemana = (d: Date): Date => {
   const clone = iniciarDia(d);
@@ -220,6 +175,10 @@ export const diasRestantes = (prazo: Prazo | null | undefined, hoje: Date = HOJE
 export const prazoEncerrado = (prazo: Prazo | null | undefined): boolean =>
   prazo?.status === StatusPrazo.ENTREGUE || prazo?.status === StatusPrazo.CANCELADO;
 
+/**
+ * Atraso é tempo corrido sobre a data informada: às 00:00 do dia seguinte.
+ * Não existe ajuste para fim de semana/feriado nem status persistido de atraso.
+ */
 export const estaAtrasado = (prazo: Prazo | null | undefined, hoje: Date = HOJE): boolean => {
   if (!prazo || prazoEncerrado(prazo)) return false;
   if (prazo.overdue !== undefined) return prazo.overdue;
@@ -250,13 +209,6 @@ export const textoRelativoVencimento = (prazo: Prazo, hoje: Date = HOJE): string
   if (dias === 0) return 'vence hoje';
   if (dias === 1) return 'vence amanhã';
   return `em ${dias} dias`;
-};
-
-export const vencimentoFoiAjustado = (prazo: Prazo | null | undefined): boolean => {
-  if (!prazo?.vencimentoOriginal || !prazo?.vencimentoAtual) return false;
-  if (prazo.vencimentoOriginal === prazo.vencimentoAtual) return false;
-  const original = paraData(prazo.vencimentoOriginal);
-  return original ? !ehDiaUtil(original) : false;
 };
 
 export const agruparPorSemana = (prazos: Prazo[], hoje: Date = HOJE, quantidadeSemanas = 8) => {

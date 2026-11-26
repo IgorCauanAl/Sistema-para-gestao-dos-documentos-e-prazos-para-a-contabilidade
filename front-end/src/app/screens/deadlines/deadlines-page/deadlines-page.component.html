@@ -33,6 +33,7 @@
               [hoje]="hoje"
               (onView)="abrirDetalhe($event)"
               (onEntregar)="entregarSolicitado = $event"
+              (onExcluir)="handleExcluir($event)"
             ></app-prazo-table>
 
             <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
@@ -71,9 +72,13 @@
           [deadline]="prazoDetalhe"
           [cliente]="clienteDetalhe"
           [hoje]="hoje"
+          [eventosAuditoria]="eventosDetalhe"
           (onClose)="fecharDetalhe()"
+          (onMoverEtapa)="handleMoverEtapa($event)"
+          (onReabrir)="handleReabrir($event)"
           (onMarcarEntregue)="entregarSolicitado = prazoDetalhe"
           (onAnexarGuia)="anexarOpen = true"
+          (onExcluir)="handleExcluirDetalhe()"
         ></app-prazo-detail-panel>
 
         <app-attach-document-modal

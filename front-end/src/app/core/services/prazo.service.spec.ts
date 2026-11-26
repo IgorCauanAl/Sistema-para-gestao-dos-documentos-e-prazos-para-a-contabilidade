@@ -56,7 +56,7 @@ describe('PrazoService', () => {
     const promessa = service.list();
     http.expectOne('/deadlines').flush([
       prazoDTO({ id: 8, status: 'CONCLUIDO', currentStage: 'CONCLUIDO', overdue: false }),
-      prazoDTO({ id: 9, status: 'ATRASADO', currentStage: 'RECEBIDO', overdue: true }),
+      prazoDTO({ id: 9, status: 'EM_ANDAMENTO', currentStage: 'RECEBIDO', overdue: true }),
       prazoDTO({ id: 10, status: 'CANCELADO', currentStage: 'RECEBIDO', overdue: false }),
     ]);
 
@@ -90,10 +90,67 @@ describe('PrazoService', () => {
     expect(atualizado?.status).toBe('ENTREGUE');
   });
 
+  it('avança e retrocede etapas pelos endpoints do RF58.1', async () => {
+    const avanco = service.moverEtapa(7, 'AGUARDANDO_CLIENTE');
+    const reqAvanco = http.expectOne('/deadlines/7/stage');
+    expect(reqAvanco.request.method).toBe('PATCH');
+    expect(reqAvanco.request.body).toEqual({ stage: 'AGUARDANDO_CLIENTE' });
+    reqAvanco.flush({ status: 'EM_ANDAMENTO' });
+    await tick();
+    http.expectOne('/deadlines').flush([prazoDTO({ currentStage: 'AGUARDANDO_CLIENTE' })]);
+    expect((await avanco)?.etapaAtual).toBe(2);
+
+    const retrocesso = service.moverEtapa(7, 'RECEBIDO');
+    const reqRetrocesso = http.expectOne('/deadlines/7/stage');
+    expect(reqRetrocesso.request.body).toEqual({ stage: 'RECEBIDO' });
+    reqRetrocesso.flush({ status: 'PENDENTE' });
+    await tick();
+    http.expectOne('/deadlines').flush([prazoDTO({ currentStage: 'RECEBIDO', status: 'PENDENTE' })]);
+    expect((await retrocesso)?.status).toBe('PENDENTE');
+  });
+
+  it('reabre prazo com justificativa e lê o histórico auditável', async () => {
+    const reabertura = service.reabrir(7, 'Documento devolvido pelo órgão');
+    const req = http.expectOne('/deadlines/7/reopen');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ justification: 'Documento devolvido pelo órgão' });
+    req.flush({ status: 'EM_ANDAMENTO' });
+    await tick();
+    http.expectOne('/deadlines').flush([prazoDTO({ status: 'EM_ANDAMENTO' })]);
+    await reabertura;
+
+    const historico = service.historico(7);
+    http.expectOne('/deadlines/7/history').flush([
+      {
+        id: 1,
+        occurredAt: '2026-11-26T10:00:00',
+        actor: 'contador',
+        action: 'DEADLINE_REOPENED',
+        entityType: 'DEADLINE',
+        entityId: 7,
+        customerId: 3,
+        ipAddress: '127.0.0.1',
+        channel: 'WEB',
+        justification: 'Documento devolvido pelo órgão',
+        metadata: null,
+      },
+    ]);
+    expect((await historico)[0].acao).toBe('DEADLINE_REOPENED');
+  });
+
+  it('exclui o prazo pela rota DELETE', async () => {
+    const promessa = service.remove(7);
+    const req = http.expectOne('/deadlines/7');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null);
+
+    await promessa;
+  });
+
   it('calcula alertas a partir dos prazos persistidos', async () => {
     const promessa = service.getAlertas();
     http.expectOne('/deadlines').flush([
-      prazoDTO({ id: 1, overdue: true, status: 'ATRASADO', dueDate: '2020-01-01' }),
+      prazoDTO({ id: 1, overdue: true, status: 'EM_ANDAMENTO', dueDate: '2020-01-01' }),
       prazoDTO({ id: 2, overdue: false, dueDate: '2099-12-20' }),
     ]);
 

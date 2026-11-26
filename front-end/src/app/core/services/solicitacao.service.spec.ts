@@ -36,7 +36,15 @@ describe('SolicitacaoService', () => {
   it('carrega solicitações dos clientes pela API e usa progresso aceitos/total', async () => {
     const promessa = service.list();
 
-    http.expectOne('/customers').flush([{ id: 3 }, { id: 4 }]);
+    const clientes = http.expectOne((request) => request.url === '/customers');
+    expect(clientes.request.params.get('page')).toBe('0');
+    clientes.flush({
+      content: [{ id: 3 }, { id: 4 }],
+      totalElements: 2,
+      totalPages: 1,
+      number: 0,
+      size: 100,
+    });
     await tick();
     http.expectOne('/requests?customerId=3').flush([listItem()]);
     http.expectOne('/requests?customerId=4').flush([]);
@@ -137,9 +145,79 @@ describe('SolicitacaoService', () => {
     await recusa;
   });
 
+  it('renova a validade do link sem trocar o token', async () => {
+    const promessa = service.renovarLink(10, '2099-12-31T18:30');
+    const req = http.expectOne('/requests/10/public-link/expiration');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ expiresAt: '2099-12-31T18:30' });
+    req.flush({ status: 'ABERTA' });
+    await tick();
+    http
+      .expectOne('/requests/10')
+      .flush({ ...listItem(), createdAt: null, items: [], publicTokenExpiresAt: '2099-12-31T18:30:00' });
+
+    const atualizada = await promessa;
+    expect(atualizada?.expiraEm).toBe('2099-12-31T18:30:00');
+  });
+
+  it('reabre item aceito e registra recusa com justificativa', async () => {
+    const promessa = service.reabrir(10, {
+      itemId: 11,
+      itemStatus: 'RECUSADO',
+      reason: 'Faltam páginas',
+    });
+    const req = http.expectOne('/requests/10/reopen');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      itemId: 11,
+      itemStatus: 'RECUSADO',
+      reason: 'Faltam páginas',
+    });
+    req.flush({ status: 'ABERTA' });
+    await tick();
+    http.expectOne('/requests/10').flush({ ...listItem(), createdAt: null, items: [] });
+    await promessa;
+  });
+
+  it('usa a expiração persistida no back-end e lê o histórico', async () => {
+    const promessa = service.getById(10);
+    http.expectOne('/requests/10').flush({
+      ...listItem(),
+      createdAt: null,
+      items: [],
+      publicTokenExpiresAt: '2020-01-01T10:00:00',
+    });
+    expect((await promessa)?.status).toBe('EXPIRADA');
+
+    const historico = service.historico(10);
+    http.expectOne('/requests/10/history').flush([
+      {
+        id: 2,
+        occurredAt: '2026-11-26T10:00:00',
+        actor: 'contador',
+        action: 'REQUEST_REOPENED',
+        entityType: 'REQUEST',
+        entityId: 10,
+        customerId: 3,
+        ipAddress: null,
+        channel: 'WEB',
+        justification: null,
+        metadata: '{"itemId":11}',
+      },
+    ]);
+    expect((await historico)[0].detalhes).toBe('{"itemId":11}');
+  });
+
   it('marca solicitação vencida a partir do prazo real da API', async () => {
     const promessa = service.list();
-    http.expectOne('/customers').flush([{ id: 3 }]);
+    const clientes = http.expectOne((request) => request.url === '/customers');
+    clientes.flush({
+      content: [{ id: 3 }],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 100,
+    });
     await tick();
     http
       .expectOne('/requests?customerId=3')

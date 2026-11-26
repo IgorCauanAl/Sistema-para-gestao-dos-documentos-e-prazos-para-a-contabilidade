@@ -16,7 +16,7 @@ export class LinkGeneratedModalComponent implements OnChanges {
   @Input() solicitacao: Solicitacao | null = null;
   @Input() cliente: Cliente | null = null;
   @Output() onClose = new EventEmitter<void>();
-  @Output() onToast = new EventEmitter<{ message: string; type: 'success' | 'info' }>();
+  @Output() onToast = new EventEmitter<{ message: string; type: 'success' | 'info' | 'error' }>();
 
   mensagem = '';
   copiado = false;
@@ -51,7 +51,7 @@ export class LinkGeneratedModalComponent implements OnChanges {
       this.onToast.emit({ message: 'Link copiado para a área de transferência.', type: 'success' });
       setTimeout(() => (this.copiado = false), 2500);
     } catch {
-      this.onToast.emit({ message: 'Não foi possível copiar o link.', type: 'info' });
+      this.onToast.emit({ message: 'Não foi possível copiar o link.', type: 'error' });
     }
   }
 }

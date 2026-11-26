@@ -67,7 +67,10 @@
                   >
                     @switch (acao(doc).tipo) {
                       @case ('send') {
-                        @if (doc.status === DocumentStatus.RASCUNHO) {
+                        @if (
+                          doc.status === DocumentStatus.CRIADO ||
+                          doc.status === DocumentStatus.RASCUNHO
+                        ) {
                           <svg lucideSend [size]="14"></svg>
                         } @else {
                           <svg lucideRotateCcw [size]="14"></svg>
@@ -78,6 +81,26 @@
                       }
                     }
                     {{ acao(doc).label }}
+                  </button>
+
+                  <button
+                    type="button"
+                    title="Compartilhar documento"
+                    [attr.aria-label]="'Compartilhar ' + doc.nome"
+                    (click)="onShare.emit(doc)"
+                    class="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  >
+                    <svg lucideShare2 [size]="16"></svg>
+                  </button>
+
+                  <button
+                    type="button"
+                    title="Excluir documento"
+                    [attr.aria-label]="'Excluir ' + doc.nome"
+                    (click)="onDelete.emit(doc)"
+                    class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <svg lucideTrash2 [size]="16"></svg>
                   </button>
                 </div>
               </td>

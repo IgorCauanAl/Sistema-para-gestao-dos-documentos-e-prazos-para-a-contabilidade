@@ -1,6 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
-import { ANOS, AREAS_DOCUMENTO, DocumentStatus, documentStatusMeta, MESES } from '../../../../core/domain/documento';
+import {
+  ANOS,
+  DocumentStatus,
+  documentStatusMeta,
+  MESES,
+  TIPOS_DOCUMENTO,
+} from '../../../../core/domain/documento';
 
 export interface DocumentFiltersModel {
   competencia: string;
@@ -25,7 +31,7 @@ export class DocumentFiltersComponent {
   @Input() filters: DocumentFiltersModel = emptyDocumentFilters();
   @Output() onChange = new EventEmitter<DocumentFiltersModel>();
 
-  readonly areas = AREAS_DOCUMENTO;
+  readonly tipos = TIPOS_DOCUMENTO.map((tipo) => tipo.nome);
   readonly statusOpcoes = Object.values(DocumentStatus);
   readonly competencias = ANOS.flatMap((ano) => MESES.map((mes) => `${mes}/${ano}`));
 

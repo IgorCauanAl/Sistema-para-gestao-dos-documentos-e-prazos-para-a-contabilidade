@@ -1,0 +1,63 @@
+<div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  <div class="w-full max-w-2xl space-y-6">
+    <div class="text-center">
+      <h1 class="text-2xl font-bold text-slate-800">Documento compartilhado</h1>
+      <p class="text-sm text-slate-500 mt-1">Envio seguro do escritório contábil</p>
+    </div>
+
+    @if (carregando) {
+      <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-10 text-center text-sm text-slate-500" role="status">
+       Carregando documento...
+      </div>
+    } @else if (erro || !documento) {
+      <div class="bg-white rounded-3xl shadow-sm border border-red-200 p-10 text-center" role="alert">
+        <p class="text-sm font-medium text-red-700">{{ erro || 'Link inválido.' }}</p>
+      </div>
+    } @else {
+      <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-start gap-4">
+          <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl shrink-0">
+            <svg lucideFileText [size]="24"></svg>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-lg font-semibold text-slate-800 break-words">{{ documento.fileName }}</p>
+            <p class="text-sm text-slate-500">
+              {{ documento.documentType }}
+              @if (documento.competence) { · {{ documento.competence }} }
+              @if (documento.fileFormat) { · {{ documento.fileFormat }} }
+            </p>
+            @if (visualizado) {
+              <p class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-green-700">
+                <svg lucideEye [size]="14"></svg> Visualização registrada
+              </p>
+            }
+          </div>
+          <span class="px-3 py-1 rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+            {{ statusLabel(documento.status) }}
+          </span>
+        </div>
+
+        @if (arquivoUrl) {
+          <div class="p-6 space-y-4">
+            <div class="h-[420px] rounded-2xl border border-slate-200 overflow-hidden bg-slate-50">
+              <iframe [src]="arquivoUrl" [title]="documento.fileName" class="w-full h-full"></iframe>
+            </div>
+            <div class="flex justify-center">
+              <a
+                [href]="arquivoUrl"
+                [attr.download]="documento.fileName"
+                class="flex items-center gap-2 px-6 py-2.5 rounded-full bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors"
+              >
+                <svg lucideDownload [size]="16"></svg> Baixar documento
+              </a>
+            </div>
+          </div>
+        } @else {
+          <div class="p-10 text-center text-sm text-slate-500">
+            Não foi possível pré-visualizar este arquivo. Solicite uma nova versão ao escritório.
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

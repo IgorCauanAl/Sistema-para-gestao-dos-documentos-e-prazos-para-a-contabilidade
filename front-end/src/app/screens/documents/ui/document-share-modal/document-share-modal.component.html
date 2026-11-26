@@ -1,0 +1,75 @@
+@if (open && share) {
+  <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+      <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Compartilhar documento</h2>
+          <p class="text-sm text-slate-500 mt-1">
+            O sistema registra o envio; a visualização é marcada quando o cliente abre o link.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="onClose.emit()"
+          class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors"
+          aria-label="Fechar compartilhamento"
+        >
+          <svg lucideX [size]="20"></svg>
+        </button>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+          <p class="text-xs font-semibold uppercase tracking-wide text-indigo-500">Documento</p>
+          <p class="text-sm font-semibold text-slate-700">{{ documento?.nome ?? 'Documento' }}</p>
+          <p class="text-xs text-slate-500">{{ cliente?.razaoSocial ?? 'Cliente' }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="link-documento">Link seguro</label>
+          <div class="flex items-center gap-2">
+            <input
+              id="link-documento"
+              type="text"
+              readonly
+              [value]="link"
+              class="flex-1 min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600"
+            />
+            <button
+              type="button"
+              (click)="copiar()"
+              class="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium flex items-center gap-2"
+            >
+              @if (copiado) {
+                <svg lucideCheck [size]="16" class="text-green-600"></svg> Copiado
+              } @else {
+                <svg lucideCopy [size]="16"></svg> Copiar
+              }
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button
+            type="button"
+            (click)="abrirWhatsapp()"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#15803D] text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            <svg lucideMessageCircle [size]="16"></svg> Abrir WhatsApp do cliente
+          </button>
+          <button
+            type="button"
+            (click)="abrirLink()"
+            class="flex items-center gap-2 px-5 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors text-sm font-semibold"
+          >
+            <svg lucideExternalLink [size]="16"></svg> Abrir link
+          </button>
+        </div>
+
+        <p class="text-xs text-slate-500">
+          O contador envia o link pelo próprio WhatsApp. Não há integração automática com a API da Meta.
+        </p>
+      </div>
+    </div>
+  </div>
+}

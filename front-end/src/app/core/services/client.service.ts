@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
@@ -10,12 +10,20 @@ interface CustomerListItemResponse {
   legalName: string;
   responsibleName: string;
   email: string;
-  pendingStatus: 'EM_DIA' | 'PENDENTE';
+  whatsapp?: string | null;
   lastSubmissionAt: string | null;
 }
 
 interface CustomerResponse extends CustomerListItemResponse {
   fullAddress: string;
+}
+
+interface CustomerPageResponse {
+  content: CustomerListItemResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 }
 
 interface CustomerCreateRequest {
@@ -24,9 +32,26 @@ interface CustomerCreateRequest {
   responsibleName: string;
   email: string;
   fullAddress: string;
+  whatsapp?: string | null;
 }
 
 type CustomerUpdateRequest = Omit<CustomerCreateRequest, 'cnpj'>;
+
+export interface ClienteListOptions {
+  search?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface ClientePage {
+  content: Cliente[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+const PAGE_SIZE = 100;
 
 const dataHora = (valor: string | null | undefined): string => {
   if (!valor) return '—';
@@ -43,9 +68,8 @@ const toCliente = (response: CustomerListItemResponse): Cliente => ({
   responsavel: response.responsibleName,
   email: response.email,
   endereco: 'fullAddress' in response ? (response as CustomerResponse).fullAddress ?? '' : '',
-  whatsapp: '',
+  whatsapp: response.whatsapp ?? '',
   canalPreferido: 'E-mail',
-  pendencias: response.pendingStatus === 'PENDENTE' ? 1 : 0,
   ultimoEnvio: dataHora(response.lastSubmissionAt),
 });
 
@@ -53,22 +77,47 @@ const toCliente = (response: CustomerListItemResponse): Cliente => ({
 export class ClientService {
   private readonly http = inject(HttpClient);
 
+  /** Lista usada por seletores: percorre todas as páginas para não perder clientes. */
   async list(): Promise<Cliente[]> {
-    const response = await firstValueFrom(
-      this.http.get<CustomerListItemResponse[]>('/customers')
-    );
-    return response.map(toCliente);
+    const clientes: Cliente[] = [];
+    let pagina = 0;
+    let totalPages = 1;
+
+    do {
+      const resultado = await this.listPage({ page: pagina, size: PAGE_SIZE });
+      clientes.push(...resultado.content);
+      totalPages = resultado.totalPages;
+      pagina += 1;
+    } while (pagina < totalPages);
+
+    return clientes;
   }
 
-  async getById(id: number | string): Promise<Cliente | null> {
-    try {
-      const response = await firstValueFrom(
-        this.http.get<CustomerResponse>(`/customers/${id}`)
-      );
-      return toCliente(response);
-    } catch {
-      return null;
-    }
+  /** Lista paginada e filtrada para a tela de gestão de clientes. */
+  async listPage(options: ClienteListOptions = {}): Promise<ClientePage> {
+    const params = new HttpParams()
+      .set('search', options.search ?? '')
+      .set('page', String(Math.max(0, options.page ?? 0)))
+      .set('size', String(Math.max(1, options.size ?? PAGE_SIZE)));
+
+    const response = await firstValueFrom(
+      this.http.get<CustomerPageResponse>('/customers', { params })
+    );
+
+    return {
+      content: response.content.map(toCliente),
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+      number: response.number,
+      size: response.size,
+    };
+  }
+
+  async getById(id: number | string): Promise<Cliente> {
+    const response = await firstValueFrom(
+      this.http.get<CustomerResponse>(`/customers/${id}`)
+    );
+    return toCliente(response);
   }
 
   async create(client: Partial<Cliente>): Promise<Cliente> {
@@ -78,6 +127,7 @@ export class ClientService {
       responsibleName: client.responsavel ?? '',
       email: client.email ?? '',
       fullAddress: client.endereco ?? '',
+      whatsapp: client.whatsapp || null,
     };
     const response = await firstValueFrom(
       this.http.post<CustomerResponse>('/customers', body)
@@ -85,21 +135,18 @@ export class ClientService {
     return toCliente(response);
   }
 
-  async update(id: number | string, client: Partial<Cliente>): Promise<Cliente | null> {
+  async update(id: number | string, client: Partial<Cliente>): Promise<Cliente> {
     const body: CustomerUpdateRequest = {
       legalName: client.razaoSocial ?? '',
       responsibleName: client.responsavel ?? '',
       email: client.email ?? '',
       fullAddress: client.endereco ?? '',
+      whatsapp: client.whatsapp || null,
     };
-    try {
-      const response = await firstValueFrom(
-        this.http.put<CustomerResponse>(`/customers/${id}`, body)
-      );
-      return toCliente(response);
-    } catch {
-      return null;
-    }
+    const response = await firstValueFrom(
+      this.http.put<CustomerResponse>(`/customers/${id}`, body)
+    );
+    return toCliente(response);
   }
 
   async remove(id: number | string): Promise<void> {

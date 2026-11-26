@@ -83,6 +83,18 @@
                       <svg lucideCheckCircle2 [size]="16"></svg>
                     </button>
                   }
+
+                  <button
+                    type="button"
+                    title="Excluir prazo"
+                    [attr.aria-label]="
+                      'Excluir ' + prazo.obrigacao + ' de ' + nomeCliente(prazo.clienteId)
+                    "
+                    (click)="onExcluir.emit(prazo)"
+                    class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <svg lucideTrash2 [size]="16"></svg>
+                  </button>
                 </div>
               </td>
             </tr>

@@ -150,6 +150,22 @@
                 </div>
               </div>
 
+              @if (saving) {
+                <div class="space-y-2" role="status" aria-live="polite">
+                  <div class="flex items-center justify-between text-xs font-medium text-slate-600">
+                    <span>{{ progress }}% enviado</span>
+                    <span>Aguarde...</span>
+                  </div>
+                  <app-progress-bar [pct]="progress" tone="indigo"></app-progress-bar>
+                </div>
+              }
+
+              @if (uploadErro) {
+                <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl" role="alert">
+                  <p class="text-sm font-medium text-red-700">{{ uploadErro }}</p>
+                </div>
+              }
+
               @if (erro) {
                 <div class="px-4 py-3 bg-red-50 border border-red-200 rounded-2xl" role="alert">
                   <p class="text-sm font-medium text-red-700">{{ erro }}</p>
@@ -175,6 +191,15 @@
             >
               {{ saving ? 'Enviando...' : 'Enviar ao cliente' }}
             </button>
+            @if (saving) {
+              <button
+                type="button"
+                (click)="cancelarUpload()"
+                class="px-5 py-2.5 rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
+              >
+                Cancelar envio
+              </button>
+            }
           </div>
         </div>
       </div>

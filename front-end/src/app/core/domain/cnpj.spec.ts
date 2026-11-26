@@ -11,9 +11,20 @@ describe('cnpj utils', () => {
     expect(maskCnpjInput('8648')).toBe('86.48');
   });
 
-  it('valida tamanho', () => {
+  it('valida os dígitos verificadores com e sem máscara', () => {
     expect(isValidCnpj('86.489.351/0001-23')).toBe(true);
+    expect(isValidCnpj('86489351000123')).toBe(true);
+    expect(isValidCnpj('12.345.678/0001-95')).toBe(true);
+    expect(isValidCnpj('00.000.000/0001-91')).toBe(true);
+  });
+
+  it('rejeita tamanho inválido e verificadores incorretos', () => {
     expect(isValidCnpj('11.111.111/1111-1')).toBe(false);
+    expect(isValidCnpj('86489351000124')).toBe(false);
+    expect(isValidCnpj('12.345.678/0001-90')).toBe(false);
+    expect(isValidCnpj('11111111111111')).toBe(false);
+    expect(isValidCnpj('864893510001234')).toBe(false);
+    expect(isValidCnpj(null)).toBe(false);
   });
 
   it('extrai dígitos', () => {

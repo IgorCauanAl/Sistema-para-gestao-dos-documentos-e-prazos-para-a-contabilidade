@@ -38,15 +38,15 @@
                       placeholder="00.000.000/0000-00"
                       [value]="formData.cnpj"
                       (input)="update('cnpj', $event)"
-                      [attr.aria-invalid]="erroCnpj ? 'true' : null"
+                      [attr.aria-invalid]="erroCnpjExibido ? 'true' : null"
                       aria-describedby="cliente-cnpj-erro"
                       class="w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
-                      [class.border-red-300]="erroCnpj"
-                      [class.border-slate-200]="!erroCnpj"
+                      [class.border-red-300]="erroCnpjExibido"
+                      [class.border-slate-200]="!erroCnpjExibido"
                     />
                   </div>
-                  @if (erroCnpj) {
-                    <p id="cliente-cnpj-erro" class="mt-1.5 text-xs text-red-600" role="alert">{{ erroCnpj }}</p>
+                  @if (erroCnpjExibido) {
+                    <p id="cliente-cnpj-erro" class="mt-1.5 text-xs text-red-600" role="alert">{{ erroCnpjExibido }}</p>
                   }
                 </div>
                 <div class="col-span-2">
@@ -65,9 +65,15 @@
                       placeholder="Nome da Empresa LTDA"
                       [value]="formData.razaoSocial"
                       (input)="update('razaoSocial', $event)"
-                      class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      [attr.aria-invalid]="erroDoCampo('razaoSocial') ? 'true' : null"
+                      class="w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      [class.border-red-300]="erroDoCampo('razaoSocial')"
+                      [class.border-slate-200]="!erroDoCampo('razaoSocial')"
                     />
                   </div>
+                  @if (erroDoCampo('razaoSocial')) {
+                    <p class="mt-1.5 text-xs text-red-600" role="alert">{{ erroDoCampo('razaoSocial') }}</p>
+                  }
                 </div>
               </div>
 
@@ -88,9 +94,15 @@
                       placeholder="Nome do contato principal"
                       [value]="formData.responsavel"
                       (input)="update('responsavel', $event)"
-                      class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      [attr.aria-invalid]="erroDoCampo('responsavel') ? 'true' : null"
+                      class="w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      [class.border-red-300]="erroDoCampo('responsavel')"
+                      [class.border-slate-200]="!erroDoCampo('responsavel')"
                     />
                   </div>
+                  @if (erroDoCampo('responsavel')) {
+                    <p class="mt-1.5 text-xs text-red-600" role="alert">{{ erroDoCampo('responsavel') }}</p>
+                  }
                 </div>
                 <div>
                   <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="cliente-email">E-mail corporativo</label>
@@ -108,9 +120,15 @@
                       placeholder="contato@empresa.com.br"
                       [value]="formData.email"
                       (input)="update('email', $event)"
-                      class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      [attr.aria-invalid]="erroDoCampo('email') ? 'true' : null"
+                      class="w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                      [class.border-red-300]="erroDoCampo('email')"
+                      [class.border-slate-200]="!erroDoCampo('email')"
                     />
                   </div>
+                  @if (erroDoCampo('email')) {
+                    <p class="mt-1.5 text-xs text-red-600" role="alert">{{ erroDoCampo('email') }}</p>
+                  }
                 </div>
               </div>
 
@@ -130,9 +148,39 @@
                     placeholder="Logradouro, Número, Bairro, Cidade - UF"
                     [value]="formData.endereco"
                     (input)="update('endereco', $event)"
-                    class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    [attr.aria-invalid]="erroDoCampo('endereco') ? 'true' : null"
+                    class="w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                    [class.border-red-300]="erroDoCampo('endereco')"
+                    [class.border-slate-200]="!erroDoCampo('endereco')"
                   />
                 </div>
+                @if (erroDoCampo('endereco')) {
+                  <p class="mt-1.5 text-xs text-red-600" role="alert">{{ erroDoCampo('endereco') }}</p>
+                }
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold mb-1.5 text-slate-700" for="cliente-whatsapp">
+                  WhatsApp do cliente
+                </label>
+                <input
+                  id="cliente-whatsapp"
+                  type="tel"
+                  name="whatsapp"
+                  placeholder="55 11 99999-9999 (opcional)"
+                  [value]="formData.whatsapp"
+                  (input)="update('whatsapp', $event)"
+                  [attr.aria-invalid]="erroDoCampo('whatsapp') ? 'true' : null"
+                  class="w-full px-3 py-2.5 bg-white border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+                  [class.border-red-300]="erroDoCampo('whatsapp')"
+                  [class.border-slate-200]="!erroDoCampo('whatsapp')"
+                />
+                <p class="mt-1.5 text-xs text-slate-500">
+                  Usado apenas para abrir o WhatsApp com o link do documento; o sistema não envia mensagens automaticamente.
+                </p>
+                @if (erroDoCampo('whatsapp')) {
+                  <p class="mt-1.5 text-xs text-red-600" role="alert">{{ erroDoCampo('whatsapp') }}</p>
+                }
               </div>
             </form>
           </div>

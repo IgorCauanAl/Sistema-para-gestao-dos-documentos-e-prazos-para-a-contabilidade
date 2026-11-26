@@ -3,19 +3,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 import { EmptyStateComponent } from '../../../core/components/ui/empty-state/empty-state.component';
-import type { Cliente, DocumentoNovo, Prazo } from '../../../core/domain/models';
+import type { Cliente, DocumentoNovo, EventoAuditoria, Prazo } from '../../../core/domain/models';
 import {
   diasRestantes,
   estaAtrasado,
   prazoEncerrado,
   prioridadeEfetiva,
   StatusPrazo,
+  type EstagioBackend,
 } from '../../../core/domain/prazo';
 import { ClientService } from '../../../core/services/client.service';
 import { DocumentService } from '../../../core/services/document.service';
-import { PrazoRefreshService } from '../../../core/services/prazo-refresh.service';
+import { DataRefreshService } from '../../../core/services/data-refresh.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { PrazoService } from '../../../core/services/prazo.service';
-import { ToastService } from '../../../core/services/toast.service';
 import { AttachDocumentModalComponent } from '../../client-detail/ui/attach-document-modal/attach-document-modal.component';
 import { ConfirmDialogComponent } from '../../../core/components/ui/confirm-dialog/confirm-dialog.component';
 import { PrazoDetailPanelComponent } from '../ui/prazo-detail-panel/prazo-detail-panel.component';
@@ -52,6 +53,7 @@ export class DeadlinesPageComponent implements OnInit, OnDestroy {
   entregando = false;
 
   detailId: number | null = null;
+  eventosDetalhe: EventoAuditoria[] = [];
   readonly hoje = new Date();
   readonly PAGE_SIZE = PAGE_SIZE;
   readonly Math = Math;
@@ -64,8 +66,8 @@ export class DeadlinesPageComponent implements OnInit, OnDestroy {
     private clientService: ClientService,
     private prazoService: PrazoService,
     private documentService: DocumentService,
-    private toastService: ToastService,
-    private refreshService: PrazoRefreshService
+    private notification: NotificationService,
+    private refreshService: DataRefreshService
   ) {}
 
   ngOnInit(): void {
@@ -73,6 +75,8 @@ export class DeadlinesPageComponent implements OnInit, OnDestroy {
       const id = Number(params.get('prazo') ?? params.get('deadline'));
       this.detailId = id || null;
       this.page = 1;
+      if (this.detailId) void this.carregarHistorico(this.detailId);
+      else this.eventosDetalhe = [];
     });
 
     this.refresh();
@@ -90,8 +94,19 @@ export class DeadlinesPageComponent implements OnInit, OnDestroy {
       ]);
       this.clientes = listaClientes;
       this.prazos = listaPrazos;
+      this.eventosDetalhe = this.detailId
+        ? await this.prazoService.historico(this.detailId)
+        : [];
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
+  private async carregarHistorico(prazoId: number): Promise<void> {
+    try {
+      this.eventosDetalhe = await this.prazoService.historico(prazoId);
     } catch {
-      this.toastService.show('Não foi possível carregar os prazos.', 'error');
+      this.eventosDetalhe = [];
     }
   }
 
@@ -101,7 +116,7 @@ export class DeadlinesPageComponent implements OnInit, OnDestroy {
 
   cancelarEntrega(): void {
     if (this.entregarSolicitado) {
-      this.toastService.show('Marcação de entrega cancelada.', 'info');
+      this.notification.info('Marcação de entrega cancelada.');
     }
     this.entregarSolicitado = null;
   }
@@ -115,13 +130,73 @@ export class DeadlinesPageComponent implements OnInit, OnDestroy {
       await this.prazoService.marcarEntregue(alvo.id);
       this.entregarSolicitado = null;
       await this.refresh();
-      this.refreshService.notify();
-      this.toastService.show(`Prazo de ${alvo.obrigacao} marcado como entregue.`);
-    } catch {
-      this.toastService.show('Não foi possível marcar o prazo como entregue.', 'error');
+      this.refreshService.notify('deadlines', 'dashboard');
+      this.notification.success(`Prazo de ${alvo.obrigacao} marcado como entregue.`);
+    } catch (error) {
+      this.notification.error(error);
     } finally {
       this.entregando = false;
     }
+  }
+
+  async handleMoverEtapa(etapa: EstagioBackend): Promise<void> {
+    const prazo = this.prazoDetalhe;
+    if (!prazo) return;
+
+    try {
+      await this.prazoService.moverEtapa(prazo.id, etapa);
+      await this.refresh();
+      await this.carregarHistorico(prazo.id);
+      this.refreshService.notify('deadlines', 'dashboard');
+      this.notification.success(`Etapa de ${prazo.obrigacao} atualizada.`);
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
+  async handleReabrir(justificativa: string): Promise<void> {
+    const prazo = this.prazoDetalhe;
+    if (!prazo) return;
+
+    try {
+      await this.prazoService.reabrir(prazo.id, justificativa);
+      await this.refresh();
+      await this.carregarHistorico(prazo.id);
+      this.refreshService.notify('deadlines', 'dashboard');
+      this.notification.success(`Prazo de ${prazo.obrigacao} reaberto e justificativa registrada.`);
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
+  async handleExcluir(prazo: Prazo): Promise<void> {
+    const confirmado = await this.notification.confirm({
+      title: 'Excluir prazo',
+      message:
+        `Excluir o prazo de ${prazo.obrigacao} (${prazo.competencia}) de ` +
+        `${this.nomeClienteFn(prazo.clienteId)}? O documento de origem será preservado. ` +
+        'Esta ação não pode ser desfeita.',
+      confirmLabel: 'Excluir prazo',
+      cancelLabel: 'Cancelar',
+      danger: true,
+    });
+    if (!confirmado) return;
+
+    try {
+      await this.prazoService.remove(prazo.id);
+      await this.refresh();
+      this.refreshService.notify('deadlines', 'dashboard');
+      if (this.prazoDetalhe?.id === prazo.id) this.fecharDetalhe();
+      this.notification.success(`Prazo de ${prazo.obrigacao} removido com sucesso.`);
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
+  async handleExcluirDetalhe(): Promise<void> {
+    const prazo = this.prazoDetalhe;
+    if (!prazo) return;
+    await this.handleExcluir(prazo);
   }
 
   async handleAnexarGuia(payload: DocumentoNovo): Promise<void> {
@@ -129,10 +204,10 @@ export class DeadlinesPageComponent implements OnInit, OnDestroy {
       await this.documentService.create(payload);
       this.anexarOpen = false;
       await this.refresh();
-      this.refreshService.notify();
-      this.toastService.show('Guia anexada ao acervo de documentos com sucesso.');
-    } catch {
-      this.toastService.show('Não foi possível anexar a guia.', 'error');
+      this.refreshService.notify('documents', 'deadlines', 'dashboard');
+      this.notification.success('Guia anexada ao acervo de documentos com sucesso.');
+    } catch (error) {
+      this.notification.error(error);
     }
   }
 

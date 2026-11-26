@@ -1,10 +1,13 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideCalendar, LucideLayoutDashboard, LucideLogOut } from '@lucide/angular';
+import { filter, Subscription } from 'rxjs';
 
 import { LogoComponent } from '../logo/logo.component';
 import { AuthService } from '../../services/auth.service';
+import { DashboardService } from '../../services/dashboard.service';
+import { DataRefreshService } from '../../services/data-refresh.service';
 import { NotificationService } from '../../services/notification.service';
 
 interface NavTab {
@@ -36,16 +39,46 @@ const navigationTabs: NavTab[] = [
   templateUrl: './top-nav.component.html',
   styleUrl: './top-nav.component.css',
 })
-export class TopNavComponent {
+export class TopNavComponent implements OnInit, OnDestroy {
   readonly tabs = navigationTabs;
   // Data atual do sistema, formatada pelo pipe `date` no template.
   readonly hoje = new Date();
+  hasDraftDocuments = false;
+
+  private refreshSubscription?: Subscription;
 
   constructor(
     public router: Router,
     public readonly auth: AuthService,
-    private readonly notification: NotificationService
+    private readonly notification: NotificationService,
+    private readonly dashboardService: DashboardService,
+    private readonly refreshService: DataRefreshService
   ) {}
+
+  async ngOnInit(): Promise<void> {
+    this.refreshSubscription = this.refreshService.changes$
+      .pipe(
+        filter((scopes) =>
+          this.refreshService.has(scopes, 'documents', 'dashboard', 'customers', 'requests')
+        )
+      )
+      .subscribe(() => void this.carregarResumo());
+
+    await this.carregarResumo();
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSubscription?.unsubscribe();
+  }
+
+  private async carregarResumo(): Promise<void> {
+    try {
+      const summary = await this.dashboardService.getSummary();
+      this.hasDraftDocuments = summary.hasDraftDocuments;
+    } catch {
+      // O aviso é auxiliar: falha ao carregar o resumo não bloqueia a navegação.
+    }
+  }
 
   isTabActive(tab: NavTab): boolean {
     const pathname = this.router.url.split('?')[0];

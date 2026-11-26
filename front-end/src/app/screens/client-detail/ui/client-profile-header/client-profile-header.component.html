@@ -10,16 +10,6 @@
             </h1>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               <span class="text-sm text-slate-500">CNPJ {{ formatCnpj(client.cnpj) }}</span>
-              <span
-                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
-                [class]="
-                  (client.pendencias ?? 0) > 0
-                    ? 'bg-orange-50 text-orange-700 border-orange-200'
-                    : 'bg-green-50 text-green-700 border-green-200'
-                "
-              >
-                {{ (client.pendencias ?? 0) > 0 ? 'Com pendência' : 'Sem pendência' }}
-              </span>
             </div>
             <div class="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-sm text-slate-600">
               <span class="flex items-center gap-1.5">

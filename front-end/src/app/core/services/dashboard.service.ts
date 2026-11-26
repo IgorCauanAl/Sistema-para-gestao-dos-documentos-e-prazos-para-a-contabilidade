@@ -7,8 +7,9 @@ import type { DashboardCharts, DashboardSummaryCard } from '../domain/models';
 /** Resposta do endpoint real GET /dashboard/summary. */
 export interface DashboardSummaryResponse {
   totalCustomers: number;
-  pendingDocuments: number;
+  resendItems: number;
   overdueObligations: number;
+  hasDraftDocuments: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,9 +37,9 @@ export class DashboardService {
         icon: 'users',
       },
       {
-        title: 'Docs. Pendentes',
-        value: String(summary.pendingDocuments),
-        subtext: 'aguardando ação/envio do cliente',
+        title: 'Itens para Reenviar',
+        value: String(summary.resendItems),
+        subtext: 'itens recusados que precisam de reenvio',
         icon: 'fileWarning',
         colorTheme: 'warning',
       },

@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
+import { Subscription } from 'rxjs';
 
 import { CardComponent } from '../../../core/components/ui/card/card.component';
 import { SummaryCardComponent } from '../../../core/components/ui/summary-card/summary-card.component';
 import type { DashboardCharts, DashboardSummaryCard } from '../../../core/domain/models';
 import { DashboardService } from '../../../core/services/dashboard.service';
+import { DataRefreshService } from '../../../core/services/data-refresh.service';
 
 const INDIGO = '#6366f1';
 const SLATE = '#94a3b8';
@@ -17,12 +19,14 @@ const SLATE = '#94a3b8';
   templateUrl: './dashboard-page.component.html',
   styleUrl: './dashboard-page.component.css',
 })
-export class DashboardPageComponent implements OnInit {
+export class DashboardPageComponent implements OnInit, OnDestroy {
   summaryCards: DashboardSummaryCard[] | null = null;
   charts: DashboardCharts | null = null;
   carregando = true;
   erro: string | null = null;
   erroGraficos: string | null = null;
+
+  private refreshSubscription?: Subscription;
 
   fluxoData: ChartData<'line'> = { labels: [], datasets: [] };
   fluxoOptions: ChartOptions<'line'> = {
@@ -47,8 +51,8 @@ export class DashboardPageComponent implements OnInit {
     },
   };
 
-  clientesData: ChartData<'doughnut'> = { labels: [], datasets: [] };
-  clientesOptions: ChartOptions<'doughnut'> = {
+  situacaoDocumentosData: ChartData<'doughnut'> = { labels: [], datasets: [] };
+  situacaoDocumentosOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '65%',
@@ -67,9 +71,22 @@ export class DashboardPageComponent implements OnInit {
     },
   };
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private refreshService: DataRefreshService
+  ) {}
 
   async ngOnInit(): Promise<void> {
+    this.refreshSubscription = this.refreshService.changes$.subscribe(() => void this.recarregarTudo());
+    await this.recarregarTudo();
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSubscription?.unsubscribe();
+  }
+
+  private async recarregarTudo(): Promise<void> {
+    this.carregando = true;
     await Promise.all([this.carregarIndicadores(), this.carregarGraficos()]);
     this.carregando = false;
   }
@@ -136,12 +153,12 @@ export class DashboardPageComponent implements OnInit {
       ],
     };
 
-    this.clientesData = {
-      labels: charts.clientsByPendingStatus.map((item) => item.label),
+    this.situacaoDocumentosData = {
+      labels: charts.documentsBySituation.map((item) => item.label),
       datasets: [
         {
-          data: charts.clientsByPendingStatus.map((item) => item.value),
-          backgroundColor: [INDIGO, '#f59e0b', '#cbd5e1'],
+          data: charts.documentsBySituation.map((item) => item.value),
+          backgroundColor: charts.documentsBySituation.map((item) => this.corSituacao(item.label)),
           borderWidth: 0,
           hoverOffset: 6,
         },
@@ -160,6 +177,13 @@ export class DashboardPageComponent implements OnInit {
         },
       ],
     };
+  }
+
+  private corSituacao(label: string): string {
+    const normalized = label.toLowerCase();
+    if (normalized.includes('atrasado')) return '#ef4444';
+    if (normalized.includes('prazo')) return '#16a34a';
+    return SLATE;
   }
 
   private corObrigacao(label: string): string {

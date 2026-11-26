@@ -9,7 +9,6 @@ export interface Cliente {
   endereco: string;
   whatsapp: string;
   canalPreferido: string;
-  pendencias: number;
   ultimoEnvio: string;
 }
 
@@ -19,6 +18,20 @@ export interface DocumentoEvento {
   hora: string;
   ip?: string;
   canal?: string | null;
+}
+
+/** Evento do histórico auditável (RF62.1) devolvido pela API. */
+export interface EventoAuditoria {
+  id: number;
+  ocorridoEm: string;
+  ator: string | null;
+  acao: string;
+  tipoEntidade: string;
+  entidadeId: number;
+  ip: string | null;
+  canal: string | null;
+  justificativa: string | null;
+  detalhes: string | null;
 }
 
 export interface Documento {
@@ -40,6 +53,9 @@ export interface Documento {
   observacao?: string;
   fontes?: string[];
   historico: DocumentoEvento[];
+  /** RF27.1: inativação lógica preserva o arquivo, mas bloqueia download. */
+  ativo?: boolean;
+  eventosAuditoria?: EventoAuditoria[];
 }
 
 export interface DocumentoNovo {
@@ -84,7 +100,6 @@ export interface Prazo {
   obrigacao: string;
   categoria: string;
   competencia: string;
-  vencimentoOriginal: string;
   vencimentoAtual: string;
   prioridade: string;
   prioridadeManual: boolean;
@@ -92,6 +107,7 @@ export interface Prazo {
   etapaAtual: number;
   etapasConcluidas: number[];
   historico: PrazoEvento[];
+  eventosAuditoria?: EventoAuditoria[];
   solicitacaoId: number | null;
   entregueEm: DataHora | null;
   /** Flag calculada pelo back-end com a data atual do servidor. */
@@ -148,6 +164,9 @@ export interface Solicitacao {
   itens: SolicitacaoItem[];
   aceitos?: number;
   totalItens?: number;
+  /** RF31.1: validade efetiva do link, persistida no back-end. */
+  expiraEm?: string | null;
+  eventosAuditoria?: EventoAuditoria[];
 }
 
 export interface SolicitacaoNova {
@@ -186,6 +205,6 @@ export interface DashboardFlowPoint {
 export interface DashboardCharts {
   documentFlow: DashboardFlowPoint[];
   documentsByType: DashboardChartItem[];
-  clientsByPendingStatus: DashboardChartItem[];
+  documentsBySituation: DashboardChartItem[];
   obligationsByStatus: DashboardChartItem[];
 }

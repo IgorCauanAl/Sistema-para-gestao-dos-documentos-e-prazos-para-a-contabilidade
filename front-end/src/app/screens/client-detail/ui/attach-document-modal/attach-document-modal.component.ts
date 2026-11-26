@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   Output,
   SimpleChanges,
   ViewChild,
@@ -16,7 +17,9 @@ import {
   LucideUploadCloud,
   LucideX,
 } from '@lucide/angular';
+import { Subscription } from 'rxjs';
 
+import { ProgressBarComponent } from '../../../../core/components/ui/progress-bar/progress-bar.component';
 import { PrazoFieldsComponent } from '../../../../core/components/ui/prazo-fields/prazo-fields.component';
 import { formatCnpj } from '../../../../core/domain/cnpj';
 import { paraBR } from '../../../../core/domain/data';
@@ -30,6 +33,7 @@ import {
   TIPOS_DOCUMENTO,
 } from '../../../../core/domain/documento';
 import type { Cliente, DocumentoNovo } from '../../../../core/domain/models';
+import { DocumentService } from '../../../../core/services/document.service';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { ClientSelectComponent } from '../../../documents/ui/client-select/client-select.component';
 
@@ -43,6 +47,7 @@ const formatSize = (bytes: number): string => {
   standalone: true,
   imports: [
     PrazoFieldsComponent,
+    ProgressBarComponent,
     ClientSelectComponent,
     LucideBuilding2,
     LucideFileText,
@@ -54,7 +59,7 @@ const formatSize = (bytes: number): string => {
   templateUrl: './attach-document-modal.component.html',
   styleUrl: './attach-document-modal.component.css',
 })
-export class AttachDocumentModalComponent implements OnChanges {
+export class AttachDocumentModalComponent implements OnChanges, OnDestroy {
   @Input() open = false;
   @Input() client: Cliente | null = null;
   @Input() clientes: Cliente[] | null = null;
@@ -72,6 +77,8 @@ export class AttachDocumentModalComponent implements OnChanges {
   diasAntecedencia = ANTECEDENCIA_PADRAO;
   canal = 'WhatsApp';
   erro = '';
+  uploadErro = '';
+  progress = 0;
   dragging = false;
   saving = false;
 
@@ -81,24 +88,51 @@ export class AttachDocumentModalComponent implements OnChanges {
   readonly formatCnpj = formatCnpj;
   readonly formatSize = formatSize;
 
-  constructor(private readonly notification: NotificationService) {}
+  private uploadSub?: Subscription;
+
+  constructor(
+    private readonly notification: NotificationService,
+    private readonly documentService: DocumentService
+  ) {}
 
   get comSelecaoDeCliente(): boolean {
     return Array.isArray(this.clientes);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes['open'] || !this.open) return;
+    if (!changes['open']) return;
+
+    this.uploadSub?.unsubscribe();
+    this.uploadSub = undefined;
+    this.saving = false;
+    this.progress = 0;
+    this.uploadErro = '';
+
+    if (!this.open) return;
+
+    this.uploadSub = this.documentService.uploadState$.subscribe((state) => {
+      this.saving = state.active;
+      this.progress = state.progress;
+      this.uploadErro = state.error ?? '';
+    });
+
     this.file = null;
     this.erro = '';
     this.dragging = false;
-    this.saving = false;
     this.tipo = this.prefill?.tipo ?? this.tiposDocument[0] ?? '';
     this.competencia = this.prefill?.competencia ?? '10/2026';
     this.vencimento = '';
     this.diasAntecedencia = ANTECEDENCIA_PADRAO;
     this.canal = (this.client?.canalPreferido as 'WhatsApp' | 'E-mail' | 'Ambos') || 'WhatsApp';
     this.clienteId = this.comSelecaoDeCliente ? null : (this.client?.id ?? null);
+  }
+
+  ngOnDestroy(): void {
+    this.uploadSub?.unsubscribe();
+  }
+
+  cancelarUpload(): void {
+    this.documentService.cancelUpload();
   }
 
   selecionarCliente(cliente: Cliente | null): void {
@@ -183,7 +217,6 @@ export class AttachDocumentModalComponent implements OnChanges {
     }
 
     this.erro = '';
-    this.saving = true;
     this.onSubmit.emit({
       clienteId: cliente.id,
       file: this.file,
@@ -196,7 +229,5 @@ export class AttachDocumentModalComponent implements OnChanges {
       tamanho: formatSize(this.file.size),
       enviarAgora,
     });
-    // parent controls close; reset saving on next open/change. Also release after emit in case parent keeps open.
-    setTimeout(() => (this.saving = false), 300);
   }
 }

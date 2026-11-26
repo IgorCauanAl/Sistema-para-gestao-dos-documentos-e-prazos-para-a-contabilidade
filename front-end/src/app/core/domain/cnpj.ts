@@ -1,5 +1,17 @@
 const CNPJ_DIGITS = 14;
 
+/** Mensagem única de validação, compartilhada com o contrato da API. */
+export const CNPJ_INVALID_MESSAGE =
+  'CNPJ inválido. Informe os 14 dígitos com os verificadores corretos.';
+
+const PRIMARY_WEIGHTS = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+const SECONDARY_WEIGHTS = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+function checkDigit(digits: number[], weights: number[]): number {
+  const remainder = digits.reduce((sum, digit, index) => sum + digit * weights[index]!, 0) % 11;
+  return remainder < 2 ? 0 : 11 - remainder;
+}
+
 export function onlyCnpjDigits(value: string | null | undefined): string {
   return (value ?? '').replace(/\D/g, '').slice(0, CNPJ_DIGITS);
 }
@@ -27,7 +39,14 @@ export function maskCnpjInput(value: string | null | undefined): string {
 }
 
 export function isValidCnpj(value: string | null | undefined): boolean {
-  return onlyCnpjDigits(value).length === CNPJ_DIGITS;
+  const digits = (value ?? '').replace(/\D/g, '');
+  if (digits.length !== CNPJ_DIGITS) return false;
+
+  const numeros = [...digits].map(Number);
+  const base = numeros.slice(0, 12);
+  const primeiro = checkDigit(base, PRIMARY_WEIGHTS);
+  const segundo = checkDigit([...base, primeiro], SECONDARY_WEIGHTS);
+  return numeros[12] === primeiro && numeros[13] === segundo;
 }
 
 export function cnpjSearchHaystack(value: string | null | undefined): string {

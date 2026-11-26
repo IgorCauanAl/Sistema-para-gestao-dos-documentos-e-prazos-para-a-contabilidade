@@ -2,8 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { paraBR } from '../domain/data';
-import type { Prazo } from '../domain/models';
+import { formatarData, formatarHora, paraBR } from '../domain/data';
+import type { EventoAuditoria, Prazo } from '../domain/models';
+import { AuditoriaService } from './auditoria.service';
 import {
   calcularPrioridade,
   diasRestantes,
@@ -28,7 +29,8 @@ interface DeadlineListItemDTO {
     | 'AGUARDANDO_CLIENTE'
     | 'AGUARDANDO_ORGAO'
     | 'CONCLUIDO';
-  status: 'PENDENTE' | 'EM_ANDAMENTO' | 'ATRASADO' | 'CONCLUIDO' | 'CANCELADO';
+  status: 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
+  deliveredOn?: string | null;
   overdue: boolean;
 }
 
@@ -50,7 +52,6 @@ const ETAPAS_POR_ESTAGIO: Record<DeadlineListItemDTO['currentStage'], number> = 
 const STATUS_POR_ESTADO_BACKEND: Record<DeadlineListItemDTO['status'], string> = {
   PENDENTE: StatusPrazo.PENDENTE,
   EM_ANDAMENTO: StatusPrazo.EM_ANDAMENTO,
-  ATRASADO: StatusPrazo.EM_ANDAMENTO,
   CONCLUIDO: StatusPrazo.ENTREGUE,
   CANCELADO: StatusPrazo.CANCELADO,
 };
@@ -64,6 +65,13 @@ const modeloPorObrigacao = (obrigacao: string): string => {
   );
 };
 
+const paraDataHora = (valor: string | null | undefined) => {
+  if (!valor) return null;
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return null;
+  return { data: formatarData(data), hora: formatarHora(data) };
+};
+
 const toPrazo = (dto: DeadlineListItemDTO): Prazo => {
   const vencimentoAtual = paraBR(dto.dueDate);
   const etapaAtual = ETAPAS_POR_ESTAGIO[dto.currentStage] ?? 0;
@@ -75,7 +83,6 @@ const toPrazo = (dto: DeadlineListItemDTO): Prazo => {
     obrigacao: dto.obligation,
     categoria: dto.category,
     competencia: dto.competence,
-    vencimentoOriginal: vencimentoAtual,
     vencimentoAtual,
     prioridade: dto.priority ?? calcularPrioridade(vencimentoAtual),
     prioridadeManual: false,
@@ -84,7 +91,7 @@ const toPrazo = (dto: DeadlineListItemDTO): Prazo => {
     etapasConcluidas: Array.from({ length: etapaAtual }, (_, indice) => indice),
     historico: [],
     solicitacaoId: null,
-    entregueEm: null,
+    entregueEm: paraDataHora(dto.deliveredOn),
     overdue: dto.overdue,
   };
 };
@@ -117,6 +124,7 @@ export const calcularAlertas = (prazos: Prazo[], hoje: Date = new Date()): Alert
 @Injectable({ providedIn: 'root' })
 export class PrazoService {
   private readonly http = inject(HttpClient);
+  private readonly auditoria = inject(AuditoriaService);
 
   async list(): Promise<Prazo[]> {
     const response = await firstValueFrom(
@@ -141,6 +149,36 @@ export class PrazoService {
   async marcarEntregue(prazoId: number | string): Promise<Prazo | null> {
     await firstValueFrom(this.http.patch(`/deadlines/${prazoId}/deliver`, {}));
     return this.getById(prazoId);
+  }
+
+  /** RF58.1: avança/retrocede etapa; CONCLUIDO do checklist não entrega o prazo. */
+  async moverEtapa(
+    prazoId: number | string,
+    etapa: DeadlineListItemDTO['currentStage']
+  ): Promise<Prazo | null> {
+    await firstValueFrom(
+      this.http.patch(`/deadlines/${prazoId}/stage`, { stage: etapa })
+    );
+    return this.getById(prazoId);
+  }
+
+  /** RF62.1: reabertura exige justificativa e fica registrada na auditoria. */
+  async reabrir(
+    prazoId: number | string,
+    justificativa: string
+  ): Promise<Prazo | null> {
+    await firstValueFrom(
+      this.http.post(`/deadlines/${prazoId}/reopen`, { justification: justificativa })
+    );
+    return this.getById(prazoId);
+  }
+
+  historico(prazoId: number | string): Promise<EventoAuditoria[]> {
+    return this.auditoria.prazo(prazoId);
+  }
+
+  async remove(prazoId: number | string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`/deadlines/${prazoId}`));
   }
 
   async getAlertas(hoje: Date = new Date()): Promise<AlertasPrazo> {

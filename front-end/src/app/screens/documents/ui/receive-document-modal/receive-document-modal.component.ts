@@ -1,7 +1,19 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import { LucideFileText, LucidePaperclip, LucideUploadCloud, LucideX } from '@lucide/angular';
+import { Subscription } from 'rxjs';
 
 import { ModalComponent } from '../../../../core/components/ui/modal/modal.component';
+import { ProgressBarComponent } from '../../../../core/components/ui/progress-bar/progress-bar.component';
 import { PrazoFieldsComponent } from '../../../../core/components/ui/prazo-fields/prazo-fields.component';
 import { paraBR } from '../../../../core/domain/data';
 import {
@@ -14,6 +26,7 @@ import {
   TIPOS_DOCUMENTO,
 } from '../../../../core/domain/documento';
 import type { Cliente, DocumentoEntrada } from '../../../../core/domain/models';
+import { DocumentService } from '../../../../core/services/document.service';
 import { ClientSelectComponent } from '../client-select/client-select.component';
 
 const inputClass =
@@ -27,11 +40,11 @@ const formatSize = (bytes: number): string => {
 @Component({
   selector: 'app-receive-document-modal',
   standalone: true,
-  imports: [ModalComponent, PrazoFieldsComponent, ClientSelectComponent, LucideFileText, LucidePaperclip, LucideUploadCloud, LucideX],
+  imports: [ModalComponent, PrazoFieldsComponent, ProgressBarComponent, ClientSelectComponent, LucideFileText, LucidePaperclip, LucideUploadCloud, LucideX],
   templateUrl: './receive-document-modal.component.html',
   styleUrl: './receive-document-modal.component.css',
 })
-export class ReceiveDocumentModalComponent implements OnChanges {
+export class ReceiveDocumentModalComponent implements OnChanges, OnDestroy {
   @Input() open = false;
   @Input() clientes: Cliente[] = [];
   @Output() onClose = new EventEmitter<void>();
@@ -49,6 +62,13 @@ export class ReceiveDocumentModalComponent implements OnChanges {
   observacao = '';
   dragging = false;
   error = '';
+  saving = false;
+  progress = 0;
+  uploadErro = '';
+
+  private uploadSub?: Subscription;
+
+  constructor(private readonly documentService: DocumentService) {}
 
   readonly inputClass = inputClass;
   readonly formatSize = formatSize;
@@ -57,7 +77,21 @@ export class ReceiveDocumentModalComponent implements OnChanges {
   readonly competencias = ANOS.flatMap((ano) => MESES.map((mes) => `${mes}/${ano}`));
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes['open'] || !this.open) return;
+    if (!changes['open']) return;
+
+    this.uploadSub?.unsubscribe();
+    this.uploadSub = undefined;
+    this.saving = false;
+    this.progress = 0;
+    this.uploadErro = '';
+
+    if (!this.open) return;
+
+    this.uploadSub = this.documentService.uploadState$.subscribe((state) => {
+      this.saving = state.active;
+      this.progress = state.progress;
+      this.uploadErro = state.error ?? '';
+    });
 
     this.clienteId = null;
     this.file = null;
@@ -69,6 +103,14 @@ export class ReceiveDocumentModalComponent implements OnChanges {
     this.observacao = '';
     this.dragging = false;
     this.error = '';
+  }
+
+  ngOnDestroy(): void {
+    this.uploadSub?.unsubscribe();
+  }
+
+  cancelarUpload(): void {
+    this.documentService.cancelUpload();
   }
 
   handleFile(selected: File | null): void {

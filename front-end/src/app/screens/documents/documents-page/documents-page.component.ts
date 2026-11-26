@@ -2,18 +2,22 @@ import { Component, OnInit } from '@angular/core';
 import { LucideInbox, LucidePlus } from '@lucide/angular';
 
 import { EmptyStateComponent } from '../../../core/components/ui/empty-state/empty-state.component';
-import { diasDesde, paraData } from '../../../core/domain/data';
 import {
   DirecaoDocumento,
   DocumentStatus,
+  TIPOS_DOCUMENTO,
   documentStatusMeta,
-  ultimaAtividade,
 } from '../../../core/domain/documento';
 import type { Cliente, Documento, DocumentoEntrada, DocumentoNovo } from '../../../core/domain/models';
 import { ClientService } from '../../../core/services/client.service';
-import { DocumentService } from '../../../core/services/document.service';
-import { PrazoRefreshService } from '../../../core/services/prazo-refresh.service';
-import { ToastService } from '../../../core/services/toast.service';
+import {
+  type DocumentoCompartilhado,
+  type DocumentoFiltros,
+  type DocumentosContadores,
+  DocumentService,
+} from '../../../core/services/document.service';
+import { DataRefreshService } from '../../../core/services/data-refresh.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { AttachDocumentModalComponent } from '../../client-detail/ui/attach-document-modal/attach-document-modal.component';
 import { DocumentViewerComponent, type ViewerDocument } from '../../client-detail/ui/document-viewer/document-viewer.component';
 import { BatchActionsBarComponent } from '../ui/batch-actions-bar/batch-actions-bar.component';
@@ -27,20 +31,19 @@ import {
   type DocumentsContagens,
 } from '../ui/documents-summary-cards/documents-summary-cards.component';
 import { DocumentsTableComponent, type DocumentsSort } from '../ui/documents-table/documents-table.component';
+import { DocumentShareModalComponent } from '../ui/document-share-modal/document-share-modal.component';
 import { DocumentsTabsComponent } from '../ui/documents-tabs/documents-tabs.component';
 import { MergePdfModalComponent, type MergePdfPayload } from '../ui/merge-pdf-modal/merge-pdf-modal.component';
 import { ReceiveDocumentModalComponent } from '../ui/receive-document-modal/receive-document-modal.component';
 
 const PAGE_SIZE = 10;
+const STATUS_BACKEND = new Set(['CRIADO', 'ENVIADO', 'VISUALIZADO', 'BAIXADO']);
 
-const chaveCompetencia = (competencia: string): number => {
-  const [mes, ano] = competencia.split('/').map(Number);
-  return ano * 12 + mes;
-};
-
-const chaveAtividade = (doc: Documento): number => {
-  const evento = ultimaAtividade(doc);
-  return evento ? paraData(evento.data)?.getTime() ?? 0 : 0;
+/** Status puramente visuais não existem no back-end; evita enviar um enum inválido. */
+const statusParaApi = (status: string | null | undefined): string | undefined => {
+  if (!status) return undefined;
+  if (status === DocumentStatus.RASCUNHO) return 'CRIADO';
+  return STATUS_BACKEND.has(status) ? status : undefined;
 };
 
 @Component({
@@ -57,6 +60,7 @@ const chaveAtividade = (doc: Documento): number => {
     ReceiveDocumentModalComponent,
     MergePdfModalComponent,
     DocumentViewerComponent,
+    DocumentShareModalComponent,
     LucideInbox,
     LucidePlus,
   ],
@@ -66,19 +70,28 @@ const chaveAtividade = (doc: Documento): number => {
 export class DocumentsPageComponent implements OnInit {
   clientes: Cliente[] = [];
   docs: Documento[] | null = null;
-  /** Base completa para contadores e opções; `docs` contém apenas a aba ativa. */
-  todosOsDocs: Documento[] = [];
 
   tab = 'TODOS';
   filters: DocumentsFiltersModel = emptyDocumentsFilters();
   cardAtivo: string | null = null;
   sort: DocumentsSort = { key: 'atividade', dir: 'desc' };
+
+  /** Página 1-based na UI; o back-end recebe page-1. */
   page = 1;
+  paginaAtual = 1;
+  totalPaginas = 1;
+  totalElementos = 0;
+  contadores: DocumentosContadores | null = null;
   selectedIds = new Set<number>();
 
   attachOpen = false;
   receiveOpen = false;
   mergeOpen = false;
+
+  shareOpen = false;
+  shareDoc: Documento | null = null;
+  shareCliente: Cliente | null = null;
+  share: DocumentoCompartilhado | null = null;
 
   viewerOpen = false;
   viewedDoc: ViewerDocument | null = null;
@@ -87,124 +100,101 @@ export class DocumentsPageComponent implements OnInit {
   readonly PAGE_SIZE = PAGE_SIZE;
   readonly DirecaoDocumento = DirecaoDocumento;
   readonly emptyFilters = emptyDocumentsFilters();
+  readonly opcoesTipo = TIPOS_DOCUMENTO.map((tipo) => tipo.nome);
 
   constructor(
     private clientService: ClientService,
     private documentService: DocumentService,
-    private prazoRefreshService: PrazoRefreshService,
-    public toastService: ToastService
+    private refreshService: DataRefreshService,
+    private notification: NotificationService
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.refresh();
   }
 
+  /** Todos os filtros, ordenação e paginação são aplicados no banco. */
   private async refresh(): Promise<void> {
-    // As abas repassam a direção ao serviço, que espelha o filtro `?direction=` do back-end.
-    const direcao = this.tab === 'TODOS' ? undefined : this.tab;
-    const [clientes, todosOsDocs, docs] = await Promise.all([
+    const [clientes, pagina, contadores] = await Promise.all([
       this.clientService.list(),
-      this.documentService.listAll(),
-      this.documentService.listAll(direcao),
+      this.documentService.listPage(this.filtrosBackend()),
+      this.documentService.contagens(),
     ]);
+
     this.clientes = clientes;
-    this.todosOsDocs = todosOsDocs;
-    this.docs = docs;
+    this.docs = pagina.content;
+    this.totalElementos = pagina.totalElements;
+    this.totalPaginas = Math.max(1, pagina.totalPages);
+    this.paginaAtual = pagina.number + 1;
+    this.contadores = contadores;
+  }
+
+  private filtrosBackend(): DocumentoFiltros {
+    const semana = this.cardAtivo === 'SEMANA';
+    const hoje = new Date();
+    hoje.setDate(hoje.getDate() - 7);
+
+    let status = statusParaApi(this.filters.status);
+    if (this.cardAtivo === 'RASCUNHO') status = 'CRIADO';
+    if (this.cardAtivo === 'ENVIADO' || this.cardAtivo === 'VISUALIZADO') status = this.cardAtivo;
+
+    return {
+      busca: this.filters.busca,
+      clienteId: this.filters.clienteId,
+      direcao: semana
+        ? DirecaoDocumento.ENTRADA
+        : this.tab === 'TODOS'
+          ? undefined
+          : this.tab,
+      status,
+      tipo: this.filters.tipo,
+      competencia: this.filters.competencia,
+      canal: this.filters.canal,
+      de: semana ? hoje.toISOString().slice(0, 10) : undefined,
+      sortBy:
+        this.sort.key === 'competencia'
+          ? 'competence'
+          : this.sort.key === 'cliente'
+            ? 'customerId'
+            : 'createdIn',
+      sortDirection: this.sort.dir,
+      page: this.page - 1,
+      size: PAGE_SIZE,
+    };
   }
 
   get nomeClienteFn(): (clienteId: number) => string {
     return (clienteId: number) => this.clientes.find((c) => c.id === clienteId)?.razaoSocial ?? '—';
   }
 
-  get opcoesTipo(): string[] {
-    return [...new Set(this.todosOsDocs.map((d) => d.tipo))].sort();
-  }
-
-  private aplicarFiltros(lista: Documento[], ignorarDirecao = false): Documento[] {
-    return lista.filter((doc) => {
-      if (!ignorarDirecao && this.tab !== 'TODOS' && doc.direcao !== this.tab) return false;
-
-      const termo = this.filters.busca.trim().toLowerCase();
-      if (termo) {
-        const alvo = `${doc.nome} ${doc.tipo} ${this.nomeClienteFn(doc.clienteId)}`.toLowerCase();
-        if (!alvo.includes(termo)) return false;
-      }
-      if (this.filters.clienteId && doc.clienteId !== this.filters.clienteId) return false;
-      if (this.filters.tipo && doc.tipo !== this.filters.tipo) return false;
-      if (this.filters.competencia && doc.competencia !== this.filters.competencia) return false;
-      if (this.filters.status && doc.status !== this.filters.status) return false;
-      if (this.filters.canal && doc.canal !== this.filters.canal) return false;
-
-      if (this.cardAtivo === 'SEMANA') {
-        const evento = ultimaAtividade(doc);
-        if (doc.direcao !== DirecaoDocumento.ENTRADA || doc.status !== DocumentStatus.RECEBIDO) return false;
-        if (!evento || diasDesde(evento.data) > 7) return false;
-      } else if (this.cardAtivo && doc.status !== this.cardAtivo) {
-        return false;
-      }
-
-      return true;
-    });
-  }
-
+  /** A página já vem filtrada e ordenada do servidor. */
   get listaExibida(): Documento[] {
-    const filtrados = this.aplicarFiltros(this.docs ?? []);
-    const comparador = (a: Documento, b: Documento): number => {
-      let cmp: number;
-      if (this.sort.key === 'cliente') {
-        cmp = this.nomeClienteFn(a.clienteId).localeCompare(this.nomeClienteFn(b.clienteId), 'pt-BR');
-      } else if (this.sort.key === 'competencia') {
-        cmp = chaveCompetencia(a.competencia) - chaveCompetencia(b.competencia);
-      } else {
-        cmp = chaveAtividade(a) - chaveAtividade(b);
-      }
-      return this.sort.dir === 'asc' ? cmp : -cmp;
-    };
+    return this.docs ?? [];
+  }
 
-    return [...filtrados].sort(comparador);
+  get paginada(): Documento[] {
+    return this.listaExibida;
+  }
+
+  get fimPagina(): number {
+    return Math.min(this.paginaAtual * PAGE_SIZE, this.totalElementos);
   }
 
   get contagens(): DocumentsContagens {
-    const naAba = this.todosOsDocs.filter((doc) => this.tab === 'TODOS' || doc.direcao === this.tab);
-    const semana = naAba.filter((doc) => {
-      if (doc.direcao !== DirecaoDocumento.ENTRADA || doc.status !== DocumentStatus.RECEBIDO) return false;
-      const evento = ultimaAtividade(doc);
-      return Boolean(evento) && diasDesde(evento.data) <= 7;
-    });
-
     return {
-      RASCUNHO: naAba.filter(
-        (d) => d.status === DocumentStatus.CRIADO || d.status === DocumentStatus.RASCUNHO
-      ).length,
-      ENVIADO: naAba.filter((d) => d.status === DocumentStatus.ENVIADO).length,
-      VISUALIZADO: naAba.filter((d) => d.status === DocumentStatus.VISUALIZADO).length,
-      SEMANA: semana.length,
+      RASCUNHO: this.contadores?.rascunho ?? 0,
+      ENVIADO: this.contadores?.enviado ?? 0,
+      VISUALIZADO: this.contadores?.visualizado ?? 0,
+      SEMANA: this.contadores?.semana ?? 0,
     };
   }
 
   get contadoresAbas(): Record<string, number> {
-    const base = this.aplicarFiltros(this.todosOsDocs, true);
     return {
-      TODOS: base.length,
-      [DirecaoDocumento.SAIDA]: base.filter((d) => d.direcao === DirecaoDocumento.SAIDA).length,
-      [DirecaoDocumento.ENTRADA]: base.filter((d) => d.direcao === DirecaoDocumento.ENTRADA).length,
+      TODOS: this.contadores?.total ?? 0,
+      [DirecaoDocumento.SAIDA]: this.contadores?.saida ?? 0,
+      [DirecaoDocumento.ENTRADA]: this.contadores?.entrada ?? 0,
     };
-  }
-
-  get totalPaginas(): number {
-    return Math.max(1, Math.ceil(this.listaExibida.length / PAGE_SIZE));
-  }
-
-  get paginaAtual(): number {
-    return Math.min(this.page, this.totalPaginas);
-  }
-
-  get paginada(): Documento[] {
-    return this.listaExibida.slice((this.paginaAtual - 1) * PAGE_SIZE, this.paginaAtual * PAGE_SIZE);
-  }
-
-  get fimPagina(): number {
-    return Math.min(this.paginaAtual * PAGE_SIZE, this.listaExibida.length);
   }
 
   get selecionados(): Documento[] {
@@ -245,22 +235,32 @@ export class DocumentsPageComponent implements OnInit {
     await this.refresh();
   }
 
-  setFilters(filters: DocumentsFiltersModel): void {
+  async setFilters(filters: DocumentsFiltersModel): Promise<void> {
     this.filters = filters;
     this.resetarPaginaSelecao();
+    await this.refresh();
   }
 
-  setCardAtivo(card: string | null): void {
+  async setCardAtivo(card: string | null): Promise<void> {
     this.cardAtivo = card;
     this.resetarPaginaSelecao();
+    await this.refresh();
   }
 
-  toggleSort(key: string): void {
+  async toggleSort(key: string): Promise<void> {
     this.sort =
       this.sort.key === key
         ? { key, dir: this.sort.dir === 'asc' ? 'desc' : 'asc' }
         : { key, dir: 'asc' };
     this.resetarPaginaSelecao();
+    await this.refresh();
+  }
+
+  async irParaPagina(pagina: number): Promise<void> {
+    if (pagina < 1 || pagina > this.totalPaginas || pagina === this.paginaAtual) return;
+    this.page = pagina;
+    this.selectedIds = new Set<number>();
+    await this.refresh();
   }
 
   private resetarPaginaSelecao(): void {
@@ -291,6 +291,7 @@ export class DocumentsPageComponent implements OnInit {
   private async registrarVisualizacao(id: number | string): Promise<void> {
     await this.documentService.markVisualizado(id);
     await this.refresh();
+    this.refreshService.notify('documents', 'dashboard');
   }
 
   async abrirViewer(doc: Documento): Promise<void> {
@@ -301,6 +302,7 @@ export class DocumentsPageComponent implements OnInit {
     const completo = await this.documentService.getById(doc.id);
     if (!completo) return;
 
+    completo.eventosAuditoria = await this.documentService.historico(completo.id);
     this.viewedDoc = completo;
     this.versions = await this.documentService.listVersions(completo);
     this.viewerOpen = true;
@@ -312,6 +314,7 @@ export class DocumentsPageComponent implements OnInit {
     const completo = await this.documentService.getById(version.id);
     if (!completo) return;
 
+    completo.eventosAuditoria = await this.documentService.historico(completo.id);
     this.viewedDoc = completo;
     this.versions = await this.documentService.listVersions(completo);
   }
@@ -327,6 +330,7 @@ export class DocumentsPageComponent implements OnInit {
 
     const atualizado = await this.documentService.markEnviado(doc.id);
     await this.refresh();
+    this.refreshService.notify('documents', 'dashboard');
     if (this.viewerOpen && this.viewedDoc) {
       const completo = await this.documentService.getById(this.viewedDoc.id);
       if (completo) {
@@ -334,27 +338,113 @@ export class DocumentsPageComponent implements OnInit {
         this.versions = await this.documentService.listVersions(completo);
       }
     }
-    this.toastService.show(`Documento enviado por ${atualizado?.canal ?? 'WhatsApp'} ao cliente.`);
+    this.notification.success(`Documento enviado por ${atualizado?.canal ?? 'WhatsApp'} ao cliente.`);
+  }
+
+  async handleShare(doc: Documento | ViewerDocument | null): Promise<void> {
+    if (!doc) return;
+    try {
+      const share = await this.documentService.compartilhar(doc.id);
+      this.share = share;
+      this.shareDoc = doc as Documento;
+      this.shareCliente =
+        doc.clienteId === undefined
+          ? null
+          : (this.clientes.find((c) => c.id === doc.clienteId) ?? null);
+      this.shareOpen = true;
+      await this.refresh();
+      this.refreshService.notify('documents', 'dashboard');
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
+  onShareToast(evento: { message: string; type: 'success' | 'info' | 'error' }): void {
+    if (evento.type === 'success') this.notification.success(evento.message);
+    else if (evento.type === 'error') this.notification.error(evento.message);
+    else this.notification.info(evento.message);
+  }
+
+  async handleInactivate(): Promise<void> {
+    const doc = this.viewedDoc;
+    if (!doc || doc.ativo === false) return;
+
+    const confirmado = await this.notification.confirm({
+      title: 'Inativar documento',
+      message:
+        `Inativar "${doc.nome}"? O arquivo e o histórico serão preservados, ` +
+        'mas o download e o link público deixarão de funcionar. Esta ação é irreversível.',
+      confirmLabel: 'Inativar documento',
+      cancelLabel: 'Cancelar',
+      danger: true,
+    });
+    if (!confirmado) return;
+
+    try {
+      const atualizado = await this.documentService.inativar(doc.id);
+      if (atualizado) {
+        atualizado.eventosAuditoria = await this.documentService.historico(doc.id);
+        this.viewedDoc = atualizado;
+        this.versions = await this.documentService.listVersions(atualizado);
+      }
+      await this.refresh();
+      this.refreshService.notify('documents', 'dashboard');
+      this.notification.success('Documento inativado. Histórico e arquivo preservados.');
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
+  async handleDelete(doc: Documento): Promise<void> {
+    const confirmado = await this.notification.confirm({
+      title: 'Excluir documento',
+      message:
+        `Excluir "${doc.nome}" também removerá o prazo vinculado a ele. ` +
+        'Esta ação não pode ser desfeita. Deseja continuar?',
+      confirmLabel: 'Excluir documento',
+      cancelLabel: 'Cancelar',
+      danger: true,
+    });
+    if (!confirmado) return;
+
+    try {
+      await this.documentService.remove(doc.id);
+      this.selectedIds = new Set([...this.selectedIds].filter((id) => id !== doc.id));
+      await this.refresh();
+      this.refreshService.notify('documents', 'deadlines', 'dashboard');
+      if (this.viewedDoc?.id === doc.id) this.fecharViewer();
+      this.notification.success(`Documento "${doc.nome}" removido com sucesso.`);
+    } catch (error) {
+      this.notification.error(error);
+    }
   }
 
   async handleAttach(payload: DocumentoNovo): Promise<void> {
-    await this.documentService.create(payload);
-    this.attachOpen = false;
-    await this.refresh();
-    this.prazoRefreshService.notify();
-    this.toastService.show(
-      payload.enviarAgora
-        ? `Documento enviado por ${payload.canal} ao cliente.`
-        : 'Documento salvo como rascunho.'
-    );
+    try {
+      await this.documentService.create(payload);
+      this.attachOpen = false;
+      await this.refresh();
+      this.refreshService.notify('documents', 'deadlines', 'dashboard');
+      if (payload.enviarAgora) {
+        this.notification.success(`Documento enviado por ${payload.canal} ao cliente.`);
+      } else {
+        this.notification.info('Documento salvo como rascunho.');
+      }
+    } catch (error) {
+      this.notification.error(error);
+    }
   }
 
   async handleReceive(payload: DocumentoEntrada): Promise<void> {
-    await this.documentService.createEntrada(payload);
-    this.receiveOpen = false;
-    await this.refresh();
-    this.prazoRefreshService.notify();
-    this.toastService.show('Recebimento registrado.');
+    try {
+      await this.documentService.createEntrada(payload);
+      this.receiveOpen = false;
+      await this.refresh();
+      this.refreshService.notify('documents', 'deadlines', 'dashboard');
+      this.notification.success('Recebimento registrado.');
+    } catch (error) {
+      this.notification.error(error);
+    }
   }
 
   async handleReenviar(): Promise<void> {
@@ -365,8 +455,9 @@ export class DocumentsPageComponent implements OnInit {
       await this.documentService.markEnviado(doc.id);
     }
     await this.refresh();
+    if (elegiveis.length > 0) this.refreshService.notify('documents', 'dashboard');
     this.selectedIds = new Set<number>();
-    this.toastService.show(
+    this.notification.success(
       elegiveis.length === 1
         ? 'Documento reenviado ao cliente.'
         : `${elegiveis.length} documentos reenviados ao cliente.`
@@ -382,24 +473,19 @@ export class DocumentsPageComponent implements OnInit {
       'Versão',
       'Status',
       'Canal',
-      'Última atividade',
       'Hash',
     ];
 
-    const linhas = this.selecionados.map((doc) => {
-      const evento = ultimaAtividade(doc);
-      return [
-        this.nomeClienteFn(doc.clienteId),
-        doc.nome,
-        doc.tipo,
-        doc.competencia,
-        `v${doc.versao}`,
-        documentStatusMeta[doc.status].label,
-        doc.canal ?? '—',
-        evento ? `${evento.data} ${evento.hora}` : '—',
-        doc.hash,
-      ];
-    });
+    const linhas = this.selecionados.map((doc) => [
+      this.nomeClienteFn(doc.clienteId),
+      doc.nome,
+      doc.tipo,
+      doc.competencia,
+      `v${doc.versao}`,
+      documentStatusMeta[doc.status]?.label ?? doc.status,
+      doc.canal ?? '—',
+      doc.hash,
+    ]);
 
     const csv =
       '\uFEFF' +
@@ -407,19 +493,22 @@ export class DocumentsPageComponent implements OnInit {
         .map((linha) => linha.map((campo) => `"${String(campo).replace(/"/g, '""')}"`).join(';'))
         .join('\r\n');
 
-    if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'protocolos.csv';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
+    if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+      this.notification.error(new Error('Não foi possível gerar o arquivo CSV neste navegador.'));
+      return;
     }
 
-    this.toastService.show('Protocolos exportados em CSV.');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'protocolos.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    this.notification.success('Protocolos exportados em CSV.');
   }
 
   async handleMerge(payload: MergePdfPayload): Promise<void> {
@@ -435,12 +524,17 @@ export class DocumentsPageComponent implements OnInit {
     this.mergeOpen = false;
     this.selectedIds = new Set<number>();
     await this.refresh();
-    this.toastService.show('Documento consolidado criado como rascunho.');
+    this.refreshService.notify('documents', 'dashboard');
+    this.notification.success('Documento consolidado criado como rascunho.');
   }
 
   handleNewVersion(): void {
     this.fecharViewer();
     this.attachOpen = true;
+  }
+
+  onComprovante(): void {
+    this.notification.info('Recurso visual: comprovante em breve.');
   }
 
   async handleDownload(): Promise<void> {
@@ -453,6 +547,7 @@ export class DocumentsPageComponent implements OnInit {
       this.versions = await this.documentService.listVersions(completo);
     }
     await this.refresh();
-    this.toastService.show('Download concluído.');
+    this.refreshService.notify('documents', 'dashboard');
+    this.notification.success('Download concluído.');
   }
 }

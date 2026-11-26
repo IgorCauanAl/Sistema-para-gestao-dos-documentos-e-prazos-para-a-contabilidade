@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LucideArrowLeft, LucideInfo } from '@lucide/angular';
 import { Subscription } from 'rxjs';
 
 import { ProgressBarComponent } from '../../../core/components/ui/progress-bar/progress-bar.component';
 import { StatusBadgeComponent } from '../../../core/components/ui/status-badge/status-badge.component';
-import type { Cliente, Solicitacao, SolicitacaoItem, SolicitacaoTentativa } from '../../../core/domain/models';
+import type { Cliente, EventoAuditoria, Solicitacao, SolicitacaoItem, SolicitacaoTentativa } from '../../../core/domain/models';
 import {
   calcularStatusSolicitacao,
   progressoSolicitacao,
@@ -13,9 +14,10 @@ import {
   StatusSolicitacao,
 } from '../../../core/domain/solicitacao';
 import { ClientService } from '../../../core/services/client.service';
+import { DataRefreshService } from '../../../core/services/data-refresh.service';
 import { DocumentService } from '../../../core/services/document.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
-import { ToastService } from '../../../core/services/toast.service';
 import { DocumentViewerComponent, type ViewerDocument } from '../../client-detail/ui/document-viewer/document-viewer.component';
 import { ApproveItemModalComponent } from '../ui/approve-item-modal/approve-item-modal.component';
 import { ManualReceiptModalComponent, type RecebimentoManualPayload } from '../ui/manual-receipt-modal/manual-receipt-modal.component';
@@ -26,6 +28,7 @@ import { SolicitacaoItemCardComponent } from '../ui/solicitacao-item-card/solici
   selector: 'app-solicitacao-detail-page',
   standalone: true,
   imports: [
+    FormsModule,
     RouterLink,
     ProgressBarComponent,
     StatusBadgeComponent,
@@ -52,6 +55,12 @@ export class SolicitacaoDetailPageComponent implements OnInit, OnDestroy {
   viewerDoc: ViewerDocument | null = null;
   viewerVersions: ViewerDocument[] = [];
 
+  eventosAuditoria: EventoAuditoria[] = [];
+  novaValidade = '';
+  itemReaberturaId: number | null = null;
+  statusReabertura: 'PENDENTE' | 'RECUSADO' = 'PENDENTE';
+  motivoReabertura = '';
+
   private id = '';
   private paramSub?: Subscription;
 
@@ -61,7 +70,8 @@ export class SolicitacaoDetailPageComponent implements OnInit, OnDestroy {
     private solicitacaoService: SolicitacaoService,
     private clientService: ClientService,
     private documentService: DocumentService,
-    public toastService: ToastService
+    private notification: NotificationService,
+    private refreshService: DataRefreshService
   ) {}
 
   ngOnInit(): void {
@@ -79,6 +89,13 @@ export class SolicitacaoDetailPageComponent implements OnInit, OnDestroy {
     const encontrada = await this.solicitacaoService.getById(this.id);
     this.sol = encontrada;
     this.cliente = encontrada ? await this.clientService.getById(encontrada.clienteId) : null;
+    try {
+      this.eventosAuditoria = encontrada
+        ? await this.solicitacaoService.historico(encontrada.id)
+        : [];
+    } catch {
+      this.eventosAuditoria = [];
+    }
     this.loading = false;
 
     if (!encontrada) {
@@ -104,18 +121,69 @@ export class SolicitacaoDetailPageComponent implements OnInit, OnDestroy {
     return this.status === StatusSolicitacao.CANCELADA || this.status === StatusSolicitacao.EXPIRADA;
   }
 
+  get podeRenovarLink(): boolean {
+    return this.status !== StatusSolicitacao.CANCELADA && this.status !== StatusSolicitacao.CONCLUIDA;
+  }
+
+  get itensAceitos(): SolicitacaoItem[] {
+    return (this.sol?.itens ?? []).filter((item) => item.status === 'APROVADO');
+  }
+
+  get podeReabrir(): boolean {
+    return this.status === StatusSolicitacao.CONCLUIDA && this.itensAceitos.length > 0;
+  }
+
+  async handleRenovarLink(): Promise<void> {
+    if (!this.sol || !this.novaValidade) return;
+    try {
+      await this.solicitacaoService.renovarLink(this.sol.id, this.novaValidade);
+      this.novaValidade = '';
+      await this.refresh();
+      this.refreshService.notify('requests');
+      this.notification.success('Validade do link público renovada. O token não foi alterado.');
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
+  async handleReabrir(): Promise<void> {
+    const sol = this.sol;
+    if (!sol || !this.itemReaberturaId) return;
+    if (this.statusReabertura === 'RECUSADO' && !this.motivoReabertura.trim()) {
+      this.notification.error(new Error('Informe o motivo da recusa.'));
+      return;
+    }
+
+    try {
+      await this.solicitacaoService.reabrir(sol.id, {
+        itemId: this.itemReaberturaId,
+        itemStatus: this.statusReabertura,
+        reason: this.statusReabertura === 'RECUSADO' ? this.motivoReabertura.trim() : undefined,
+      });
+      this.itemReaberturaId = null;
+      this.statusReabertura = 'PENDENTE';
+      this.motivoReabertura = '';
+      await this.refresh();
+      this.refreshService.notify('requests', 'deadlines', 'dashboard');
+      this.notification.success('Solicitação reaberta. O prazo original não foi alterado.');
+    } catch (error) {
+      this.notification.error(error);
+    }
+  }
+
   async handleApproveConfirm(): Promise<void> {
     const item = this.approveItem;
     if (!item || !this.sol) return;
 
     const updated = await this.solicitacaoService.aprovarItem(this.sol.id, item.id);
     if (!updated) return;
-    this.sol = updated;
+    await this.refresh();
     this.approveItem = null;
-    this.toastService.show(`Item "${item.nome}" aprovado.`);
+    this.refreshService.notify('requests');
+    this.notification.success(`Item "${item.nome}" aprovado.`);
 
     if (calcularStatusSolicitacao(updated) === StatusSolicitacao.CONCLUIDA) {
-      this.toastService.show('Solicitação concluída: todos os itens foram aprovados.');
+      this.notification.success('Solicitação concluída: todos os itens foram aprovados.');
     }
   }
 
@@ -128,9 +196,10 @@ export class SolicitacaoDetailPageComponent implements OnInit, OnDestroy {
       detalhes: payload.detalhes,
     });
     if (!updated) return;
-    this.sol = updated;
+    await this.refresh();
     this.rejectItem = null;
-    this.toastService.show(`Item "${item.nome}" recusado. Motivo registrado na solicitação.`);
+    this.refreshService.notify('requests', 'dashboard');
+    this.notification.success(`Item "${item.nome}" recusado. Motivo registrado na solicitação.`);
   }
 
   async handleManualConfirm(payload: RecebimentoManualPayload): Promise<void> {
@@ -139,20 +208,22 @@ export class SolicitacaoDetailPageComponent implements OnInit, OnDestroy {
 
     const updated = await this.solicitacaoService.registrarRecebimentoManual(this.sol.id, item.id, payload);
     if (!updated) return;
-    this.sol = updated;
+    await this.refresh();
     this.manualItem = null;
-    this.toastService.show('Recebimento manual registrado.');
+    this.refreshService.notify('requests', 'documents', 'deadlines', 'dashboard');
+    this.notification.success('Recebimento manual registrado.');
   }
 
   async baixarArquivo(event: { tentativa: SolicitacaoTentativa }): Promise<void> {
     const documentId = event.tentativa.documentId;
     if (!documentId) {
-      this.toastService.show('O arquivo enviado não está disponível para download.', 'error');
+      this.notification.error(new Error('O arquivo enviado não está disponível para download.'));
       return;
     }
 
     await this.documentService.baixarArquivo(documentId);
-    this.toastService.show('Download concluído.');
+    this.refreshService.notify('documents', 'dashboard');
+    this.notification.success('Download concluído.');
   }
 
   abrirArquivo(event: { item: SolicitacaoItem; tentativa: SolicitacaoTentativa }): void {

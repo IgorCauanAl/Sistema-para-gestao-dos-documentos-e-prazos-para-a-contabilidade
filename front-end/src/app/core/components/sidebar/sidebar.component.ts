@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideBell, LucideGlobe, LucideLayoutDashboard, LucideSettings } from '@lucide/angular';
-import { Subscription } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 
 import type { Cliente, Prazo } from '../../domain/models';
 import { ClientService } from '../../services/client.service';
-import { PrazoRefreshService } from '../../services/prazo-refresh.service';
+import { DataRefreshService } from '../../services/data-refresh.service';
 import { AlertasPrazo, calcularAlertas, PrazoService } from '../../services/prazo.service';
-import { ToastService } from '../../services/toast.service';
+import { NotificationService } from '../../services/notification.service';
 import { AlertaPanelComponent } from '../../../screens/deadlines/ui/alerta-panel/alerta-panel.component';
 import { EmailSimuladoModalComponent } from '../../../screens/deadlines/ui/email-simulado-modal/email-simulado-modal.component';
 
@@ -41,13 +41,25 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private router: Router,
     private prazoService: PrazoService,
     private clientService: ClientService,
-    private toastService: ToastService,
-    private refreshService: PrazoRefreshService
+    private notification: NotificationService,
+    private refreshService: DataRefreshService
   ) {}
 
   ngOnInit(): void {
     this.refresh();
-    this.subscription = this.refreshService.changes$.subscribe(() => this.refresh());
+    this.subscription = this.refreshService.changes$
+      .pipe(
+        filter((scopes) =>
+          this.refreshService.has(
+            scopes,
+            'customers',
+            'documents',
+            'deadlines',
+            'requests',
+          )
+        )
+      )
+      .subscribe(() => this.refresh());
     this.router.events.subscribe(() => {
       this.panelOpen = false;
     });
@@ -79,6 +91,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   enviarResumo(): void {
     this.emailOpen = false;
-    this.toastService.show('Resumo diário enviado (simulado).');
+    this.notification.success('Resumo diário enviado (simulado).');
   }
 }

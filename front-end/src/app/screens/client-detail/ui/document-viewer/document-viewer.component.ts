@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import {
   LucideAward,
   LucideCheck,
@@ -8,6 +8,8 @@ import {
   LucideDownload,
   LucidePlus,
   LucideSend,
+  LucideShieldOff,
+  LucideShare2,
   LucideX,
   LucideZoomIn,
   LucideZoomOut,
@@ -16,10 +18,13 @@ import {
 import { FileIconComponent } from '../../../../core/components/ui/file-icon/file-icon.component';
 import { StatusBadgeComponent } from '../../../../core/components/ui/status-badge/status-badge.component';
 import { TimelineComponent, type TimelineItem } from '../../../../core/components/ui/timeline/timeline.component';
-import type { DocumentoEvento } from '../../../../core/domain/models';
+import type { DocumentoEvento, EventoAuditoria } from '../../../../core/domain/models';
+import { NotificationService } from '../../../../core/services/notification.service';
 
 export interface ViewerDocument {
   id: number | string;
+  /** Presente quando o objeto veio da listagem; opcional para rascunhos locais. */
+  clienteId?: number;
   nome: string;
   formato: string;
   versao: number;
@@ -29,6 +34,9 @@ export interface ViewerDocument {
   hash: string;
   direcao?: string;
   historico: DocumentoEvento[];
+  /** RF27.1: documento inativo preserva histórico, mas não permite novas ações. */
+  ativo?: boolean;
+  eventosAuditoria?: EventoAuditoria[];
 }
 
 const protocolStepsSaida = [
@@ -60,6 +68,8 @@ const protocolStepsEntrada = [
     LucideDownload,
     LucidePlus,
     LucideSend,
+    LucideShare2,
+    LucideShieldOff,
     LucideX,
     LucideZoomIn,
     LucideZoomOut,
@@ -68,6 +78,8 @@ const protocolStepsEntrada = [
   styleUrl: './document-viewer.component.css',
 })
 export class DocumentViewerComponent implements OnChanges {
+  private readonly notification = inject(NotificationService);
+
   @Input() open = false;
   @Input() documento: ViewerDocument | null = null;
   @Input() versions: ViewerDocument[] = [];
@@ -78,6 +90,8 @@ export class DocumentViewerComponent implements OnChanges {
   @Output() onNewVersion = new EventEmitter<void>();
   @Output() onDownload = new EventEmitter<void>();
   @Output() onReceipt = new EventEmitter<void>();
+  @Output() onShare = new EventEmitter<void>();
+  @Output() onInactivate = new EventEmitter<void>();
 
   readonly Math = Math;
   zoom = 100;
@@ -97,6 +111,10 @@ export class DocumentViewerComponent implements OnChanges {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     if (this.open) this.onClose.emit();
+  }
+
+  get inativo(): boolean {
+    return this.documento?.ativo === false;
   }
 
   get isPdf(): boolean {
@@ -143,9 +161,11 @@ export class DocumentViewerComponent implements OnChanges {
     try {
       await navigator.clipboard.writeText(this.documento.hash);
       this.copied = true;
+      this.notification.success('Hash copiado para a área de transferência.');
       setTimeout(() => (this.copied = false), 2000);
     } catch {
       this.copied = false;
+      this.notification.error(new Error('Não foi possível copiar o hash do documento.'));
     }
   }
 }

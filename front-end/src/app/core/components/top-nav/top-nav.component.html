@@ -20,6 +20,15 @@
             <svg lucideLayoutDashboard [size]="16"></svg>
           }
           {{ tab.label }}
+          @if (tab.id === 'Documentos' && hasDraftDocuments) {
+            <span
+              class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700"
+              title="Existem documentos em rascunho"
+              aria-label="Documentos em rascunho"
+            >
+              Rascunho
+            </span>
+          }
         </button>
       }
     </nav>

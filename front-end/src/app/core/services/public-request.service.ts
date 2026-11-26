@@ -43,6 +43,8 @@ interface PublicRequestDTO {
   createdIn: string | null;
   completedIn?: string | null;
   cancelledIn?: string | null;
+  /** RF31.1: validade efetiva do link, persistida no back-end. */
+  publicTokenExpiresAt?: string | null;
   checklist: PublicChecklistItemDTO[] | null;
 }
 
@@ -68,6 +70,7 @@ export interface PortalTokenValidation {
   requestId: number;
   status: string;
   deadline: string | null;
+  expiresAt?: string | null;
 }
 
 const statusSolicitacao = (status: string): string => {
@@ -110,7 +113,14 @@ const prazo = (valor: string | null | undefined): string => {
   return dia && mes && ano ? `${dia}/${mes}/${ano}` : '';
 };
 
-const expirada = (deadline: string | null | undefined): boolean => {
+const expirada = (
+  deadline: string | null | undefined,
+  expiresAt?: string | null
+): boolean => {
+  if (expiresAt) {
+    const expira = new Date(expiresAt);
+    return !Number.isNaN(expira.getTime()) && expira.getTime() <= Date.now();
+  }
   if (!deadline) return false;
   const alvo = paraData(prazo(deadline));
   if (!alvo) return false;
@@ -166,12 +176,14 @@ const paraSolicitacao = (dto: PublicRequestDTO, token: string): Solicitacao => {
   }));
 
   let status = statusSolicitacao(dto.status);
-  if (status === STATUS_SOLICITACAO.ABERTA && expirada(dto.deadline)) {
+  const validadeBackend = dto.publicTokenExpiresAt ?? null;
+  if (status === STATUS_SOLICITACAO.ABERTA && expirada(dto.deadline, validadeBackend)) {
     status = STATUS_SOLICITACAO.EXPIRADA;
   }
 
   const criadoEm = dataHora(dto.createdIn);
   const prazoEnvio = prazo(dto.deadline);
+  const validade = validadeBackend ? dataHora(validadeBackend) : null;
 
   return {
     id: dto.id,
@@ -182,11 +194,12 @@ const paraSolicitacao = (dto: PublicRequestDTO, token: string): Solicitacao => {
     instrucoes: '',
     canal: 'Link público',
     token,
-    validadeAte: prazoEnvio,
+    validadeAte: validade ? `${validade.data} ${validade.hora}` : prazoEnvio,
     validadeDias: 0,
     status,
     criadoEm,
     itens,
+    expiraEm: validadeBackend,
   };
 };
 
@@ -201,7 +214,6 @@ const paraCliente = (dto: PublicRequestDTO): Cliente | null => {
     endereco: '',
     whatsapp: '',
     canalPreferido: '',
-    pendencias: 0,
     ultimoEnvio: '',
   };
 };
@@ -213,6 +225,7 @@ export const mensagemErroPortal = (erro: unknown): string => {
     if (erro.status === 413) return 'O arquivo excede o limite de 25 MB.';
     if (erro.status === 415) return 'Formato de arquivo não aceito.';
     if (erro.status === 409) return 'Este item já foi enviado. Aguarde a conferência do escritório.';
+    if (erro.status === 410) return 'Este link expirou. Solicite um novo link ao escritório.';
     if (erro.status === 404) return 'Solicitação ou item não encontrado.';
   }
   return 'Não foi possível concluir a operação. Tente novamente.';
@@ -230,7 +243,10 @@ export class PublicRequestService {
         ),
       );
     } catch (erro) {
-      if (erro instanceof HttpErrorResponse && (erro.status === 404 || erro.status === 400)) {
+      if (
+        erro instanceof HttpErrorResponse &&
+        (erro.status === 404 || erro.status === 400 || erro.status === 410)
+      ) {
         return null;
       }
       throw erro;
@@ -244,7 +260,10 @@ export class PublicRequestService {
       );
       return { solicitacao: paraSolicitacao(dto, token), cliente: paraCliente(dto) };
     } catch (erro) {
-      if (erro instanceof HttpErrorResponse && (erro.status === 404 || erro.status === 400)) {
+      if (
+        erro instanceof HttpErrorResponse &&
+        (erro.status === 404 || erro.status === 400 || erro.status === 410)
+      ) {
         return null;
       }
       throw erro;

@@ -22,8 +22,9 @@ import {
   TAMANHO_MAXIMO_MB,
   type StatusMeta,
 } from '../../../core/domain/solicitacao';
+import { DataRefreshService } from '../../../core/services/data-refresh.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { mensagemErroPortal, PublicRequestService } from '../../../core/services/public-request.service';
-import { ToastService } from '../../../core/services/toast.service';
 
 const EXTENSOES: Record<string, string[] | null> = {
   PDF: ['pdf'],
@@ -134,7 +135,8 @@ export class ClientPortalPageComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private publicRequestService: PublicRequestService,
-    private toastService: ToastService
+    private notification: NotificationService,
+    private refreshService: DataRefreshService
   ) {}
 
   ngOnInit(): void {
@@ -274,8 +276,9 @@ export class ClientPortalPageComponent implements OnInit, OnDestroy {
 
       this.setUpload(item.id, { pct: 100, enviando: false, file: null, observacao: '' });
       this.sucesso = { itemId: item.id, nome: item.nome, protocolo: resultado.protocolo };
-      this.toastService.show('Documento enviado com sucesso.');
+      this.notification.success('Documento enviado com sucesso.');
       await this.refresh();
+      this.refreshService.notify('requests', 'documents', 'deadlines', 'dashboard');
     } catch (erro) {
       this.setUpload(item.id, {
         enviando: false,

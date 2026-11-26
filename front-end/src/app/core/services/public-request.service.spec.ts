@@ -56,6 +56,28 @@ describe('PublicRequestService', () => {
     expect(resultado?.cliente?.razaoSocial).toBe('Alpha Tecnologia Ltda');
   });
 
+  it('usa a validade persistida no back-end para marcar o link como expirado', async () => {
+    const promessa = service.getByToken('token-expirado');
+    http.expectOne('/public/requests/token-expirado').flush({
+      ...resposta,
+      publicTokenExpiresAt: '2020-01-01T10:00:00',
+    });
+
+    const resultado = await promessa;
+    expect(resultado?.solicitacao.status).toBe('EXPIRADA');
+    expect(resultado?.solicitacao.validadeAte).toContain('01/01/2020');
+  });
+
+  it('trata token expirado (410) como link indisponível', async () => {
+    const promessa = service.getByToken('expirado');
+    http.expectOne('/public/requests/expirado').flush(
+      { detail: 'Link expirado' },
+      { status: 410, statusText: 'Gone' },
+    );
+
+    expect(await promessa).toBeNull();
+  });
+
   it('retorna null quando o token é inválido', async () => {
     const promessa = service.getByToken('invalido');
     http.expectOne('/public/requests/invalido').flush(

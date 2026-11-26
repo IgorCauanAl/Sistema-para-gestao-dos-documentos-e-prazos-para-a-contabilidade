@@ -7,8 +7,9 @@ import { SummaryCardComponent } from '../../../core/components/ui/summary-card/s
 import type { Cliente, Solicitacao, SolicitacaoNova } from '../../../core/domain/models';
 import { calcularStatusSolicitacao, StatusSolicitacao } from '../../../core/domain/solicitacao';
 import { ClientService } from '../../../core/services/client.service';
+import { DataRefreshService } from '../../../core/services/data-refresh.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { SolicitacaoService } from '../../../core/services/solicitacao.service';
-import { ToastService } from '../../../core/services/toast.service';
 import { LinkGeneratedModalComponent } from '../ui/link-generated-modal/link-generated-modal.component';
 import { NovaSolicitacaoModalComponent } from '../ui/nova-solicitacao-modal/nova-solicitacao-modal.component';
 import {
@@ -47,7 +48,8 @@ export class SolicitacoesPageComponent implements OnInit {
     private router: Router,
     private solicitacaoService: SolicitacaoService,
     private clientService: ClientService,
-    private toastService: ToastService
+    private notification: NotificationService,
+    private refreshService: DataRefreshService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -88,11 +90,12 @@ export class SolicitacoesPageComponent implements OnInit {
     const created = await this.solicitacaoService.create(payload);
     this.novaOpen = false;
     await this.refresh();
+    this.refreshService.notify('requests');
 
     if (payload.enviarAgora) {
       this.linkModal = created;
     } else {
-      this.toastService.show('Solicitação salva como rascunho.');
+      this.notification.info('Solicitação salva como rascunho.');
     }
   }
 
@@ -100,7 +103,7 @@ export class SolicitacoesPageComponent implements OnInit {
     this.router.navigate([`/solicitacoes/${sol.id}`]);
   }
 
-  handleToast(event: { message: string; type: 'success' | 'info' }): void {
-    this.toastService.show(event.message, event.type);
+  handleToast(event: { message: string; type: 'success' | 'info' | 'error' }): void {
+    this.notification.show(event.message, event.type);
   }
 }

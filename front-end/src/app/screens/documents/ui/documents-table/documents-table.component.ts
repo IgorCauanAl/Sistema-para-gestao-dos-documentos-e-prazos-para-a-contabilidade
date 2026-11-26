@@ -8,6 +8,8 @@ import {
   LucideFileSearch,
   LucideRotateCcw,
   LucideSend,
+  LucideShare2,
+  LucideTrash2,
 } from '@lucide/angular';
 
 import { FileIconComponent } from '../../../../core/components/ui/file-icon/file-icon.component';
@@ -60,6 +62,8 @@ const contextualAction = (doc: Documento): AcaoContextual | null => {
     LucideFileSearch,
     LucideRotateCcw,
     LucideSend,
+    LucideShare2,
+    LucideTrash2,
   ],
   templateUrl: './documents-table.component.html',
   styleUrl: './documents-table.component.css',
@@ -72,6 +76,8 @@ export class DocumentsTableComponent {
   @Input() todosDaPaginaSelecionados = false;
   @Output() onView = new EventEmitter<Documento>();
   @Output() onSend = new EventEmitter<Documento>();
+  @Output() onDelete = new EventEmitter<Documento>();
+  @Output() onShare = new EventEmitter<Documento>();
   @Output() onSort = new EventEmitter<string>();
   @Output() onToggleRow = new EventEmitter<{ id: number; checked: boolean }>();
   @Output() onTogglePage = new EventEmitter<boolean>();

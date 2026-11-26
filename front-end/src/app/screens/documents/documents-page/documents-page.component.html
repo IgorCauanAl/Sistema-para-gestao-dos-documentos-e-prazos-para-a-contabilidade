@@ -73,6 +73,8 @@
               [todosDaPaginaSelecionados]="todosDaPaginaSelecionados"
               (onView)="abrirViewer($event)"
               (onSend)="handleSend($event)"
+              (onDelete)="handleDelete($event)"
+              (onShare)="handleShare($event)"
               (onSort)="toggleSort($event)"
               (onToggleRow)="toggleRow($event)"
               (onTogglePage)="togglePage($event)"
@@ -80,15 +82,15 @@
 
             <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
               <p>
-                Mostrando {{ (paginaAtual - 1) * PAGE_SIZE + 1 }}–{{ fimPagina }} de
-                {{ listaExibida.length }} document{{ listaExibida.length > 1 ? 's' : '' }}
+                Mostrando {{ totalElementos === 0 ? 0 : (paginaAtual - 1) * PAGE_SIZE + 1 }}–{{ fimPagina }} de
+                {{ totalElementos }} document{{ totalElementos > 1 ? 's' : '' }}
               </p>
               <div class="flex items-center gap-2">
                 <button
                   type="button"
                   aria-label="Página anterior"
                   [disabled]="paginaAtual <= 1"
-                  (click)="page = paginaAtual - 1"
+                  (click)="irParaPagina(paginaAtual - 1)"
                   class="px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Anterior
@@ -97,7 +99,7 @@
                   type="button"
                   aria-label="Próxima página"
                   [disabled]="paginaAtual >= totalPaginas"
-                  (click)="page = paginaAtual + 1"
+                  (click)="irParaPagina(paginaAtual + 1)"
                   class="px-4 py-2 rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   Próxima
@@ -152,8 +154,19 @@
           (onResend)="handleSend(viewedDoc)"
           (onNewVersion)="handleNewVersion()"
           (onDownload)="handleDownload()"
-          (onReceipt)="toastService.show('Recurso visual: comprovante em breve.', 'info')"
+          (onReceipt)="onComprovante()"
+          (onShare)="handleShare(viewedDoc)"
+          (onInactivate)="handleInactivate()"
         ></app-document-viewer>
+
+        <app-document-share-modal
+          [open]="shareOpen"
+          [documento]="shareDoc"
+          [cliente]="shareCliente"
+          [share]="share"
+          (onClose)="shareOpen = false"
+          (onToast)="onShareToast($event)"
+        ></app-document-share-modal>
       </div>
     }
   

@@ -90,13 +90,18 @@
       </app-card>
 
       <app-card>
-        <h3 class="text-xl font-bold text-slate-800 mb-6">Situação dos Clientes</h3>
-        @if (clientesData.labels?.length) {
+        <h3 class="text-xl font-bold text-slate-800 mb-6">Situação dos Documentos</h3>
+        @if (situacaoDocumentosData.labels?.length) {
           <div class="h-64 relative">
-            <canvas baseChart [type]="'doughnut'" [data]="clientesData" [options]="clientesOptions"></canvas>
+            <canvas
+              baseChart
+              [type]="'doughnut'"
+              [data]="situacaoDocumentosData"
+              [options]="situacaoDocumentosOptions"
+            ></canvas>
           </div>
         } @else {
-          <p class="text-sm text-slate-400 py-16 text-center">Nenhum cliente cadastrado.</p>
+          <p class="text-sm text-slate-400 py-16 text-center">Nenhum documento cadastrado.</p>
         }
       </app-card>
     </div>

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { LucideEye, LucideFileSearch, LucideRotateCcw, LucideSend } from '@lucide/angular';
+import { LucideEye, LucideFileSearch, LucideRotateCcw, LucideSend, LucideShare2, LucideTrash2 } from '@lucide/angular';
 
 import { FileIconComponent } from '../../../../core/components/ui/file-icon/file-icon.component';
 import { StatusBadgeComponent } from '../../../../core/components/ui/status-badge/status-badge.component';
@@ -24,6 +24,8 @@ type AcaoLinha = { label: string; tipo: 'send' | 'view' };
     LucideFileSearch,
     LucideRotateCcw,
     LucideSend,
+    LucideShare2,
+    LucideTrash2,
   ],
   templateUrl: './document-table.component.html',
   styleUrl: './document-table.component.css',
@@ -32,6 +34,8 @@ export class DocumentTableComponent {
   @Input() documents: Documento[] = [];
   @Output() onView = new EventEmitter<Documento>();
   @Output() onSend = new EventEmitter<Documento>();
+  @Output() onDelete = new EventEmitter<Documento>();
+  @Output() onShare = new EventEmitter<Documento>();
 
   readonly DocumentStatus = DocumentStatus;
 

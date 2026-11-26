@@ -3,7 +3,7 @@
       <div class="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-300">
         <app-client-profile-header
           [client]="client"
-          (onEdit)="editOpen = true"
+          (onEdit)="openEdit()"
           (onAttach)="openAttach()"
         ></app-client-profile-header>
 
@@ -13,7 +13,7 @@
           <div class="space-y-6">
             <app-document-filters
               [filters]="filters"
-              (onChange)="filters = $event"
+              (onChange)="setFilters($event)"
             ></app-document-filters>
 
             @if (filteredDocs.length > 0) {
@@ -21,7 +21,39 @@
                 [documents]="filteredDocs"
                 (onView)="openViewer($event)"
                 (onSend)="handleSend($event)"
+                (onDelete)="handleDeleteDoc($event)"
+                (onShare)="handleShare($event)"
               ></app-document-table>
+
+              @if (totalPaginas > 1) {
+                <div class="flex items-center justify-between gap-3 px-2">
+                  <p class="text-xs text-slate-500">
+                    Mostrando {{ totalElementos === 0 ? 0 : (paginaAtual - 1) * PAGE_SIZE + 1 }}–{{ fimPagina }} de
+                    {{ totalElementos }} documento(s)
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Página anterior"
+                      [disabled]="paginaAtual <= 1"
+                      (click)="irParaPagina(paginaAtual - 1)"
+                      class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                    >
+                      Anterior
+                    </button>
+                    <span class="text-xs font-semibold text-slate-600">{{ paginaAtual }} / {{ totalPaginas }}</span>
+                    <button
+                      type="button"
+                      aria-label="Próxima página"
+                      [disabled]="paginaAtual >= totalPaginas"
+                      (click)="irParaPagina(paginaAtual + 1)"
+                      class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 disabled:opacity-40 hover:bg-slate-50"
+                    >
+                      Próxima
+                    </button>
+                  </div>
+                </div>
+              }
             } @else if (hasAnyDoc) {
               <app-empty-state
                 title="Nenhum document encontrado"
@@ -118,15 +150,29 @@
           (onResend)="handleSend(viewedDoc)"
           (onNewVersion)="handleNewVersion()"
           (onDownload)="handleDownload()"
-          (onReceipt)="toastService.show('Recurso visual: comprovante em breve.', 'info')"
+          (onReceipt)="onComprovante()"
+          (onShare)="handleShare(viewedDoc)"
+          (onInactivate)="handleInactivateDoc()"
         ></app-document-viewer>
+
+        <app-document-share-modal
+          [open]="shareOpen"
+          [documento]="shareDoc"
+          [cliente]="client"
+          [share]="share"
+          (onClose)="shareOpen = false"
+          (onToast)="onShareToast($event)"
+        ></app-document-share-modal>
 
         <app-client-form-modal
           [open]="editOpen"
           title="Editar Cliente"
           [formData]="formData"
+          [saving]="savingEdit"
+          [fieldErrors]="fieldErrors"
+          (fieldErrorsChange)="fieldErrors = $event"
           (formDataChange)="formData = $event"
-          (onClose)="editOpen = false"
+          (onClose)="closeEdit()"
           (onSubmit)="handleEditSubmit()"
         ></app-client-form-modal>
       </div>

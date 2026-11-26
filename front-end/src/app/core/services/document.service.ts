@@ -1,18 +1,20 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpEventType, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-
 import {
-  DirecaoDocumento,
-  DocumentStatus,
-  areaDoTipo,
-} from '../domain/documento';
+  BehaviorSubject,
+  EmptyError,
+  Subject,
+  filter,
+  firstValueFrom,
+  lastValueFrom,
+  takeUntil,
+  tap,
+} from 'rxjs';
+
+import { DirecaoDocumento, areaDoTipo } from '../domain/documento';
 import { paraData } from '../domain/data';
-import type {
-  Documento,
-  DocumentoEntrada,
-  DocumentoNovo,
-} from '../domain/models';
+import type { Documento, DocumentoEntrada, DocumentoNovo, EventoAuditoria } from '../domain/models';
+import { AuditoriaService } from './auditoria.service';
 
 interface DocumentResponse {
   id: number;
@@ -25,9 +27,77 @@ interface DocumentResponse {
   status: 'CRIADO' | 'ENVIADO' | 'VISUALIZADO' | 'BAIXADO';
   fileFormat: 'PDF' | 'OFX' | 'XML' | 'XLSX' | 'CSV' | 'TXT';
   fileName: string;
-  storagePath?: string;
-  createdIn: string;
+  storagePath?: string | null;
+  /** Detalhe e upload usam createdIn; listagens usam createdAt. */
+  createdIn?: string | null;
+  createdAt?: string | null;
+  /** RF27.1: inativado = histórico preservado, download e link público bloqueados. */
+  active?: boolean;
 }
+
+interface DocumentPageResponse {
+  content: DocumentResponse[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface DocumentoFiltros {
+  busca?: string | null;
+  clienteId?: number | null;
+  direcao?: string | null;
+  status?: string | null;
+  tipo?: string | null;
+  competencia?: string | null;
+  canal?: string | null;
+  de?: string | null;
+  ate?: string | null;
+  sortBy?: string | null;
+  sortDirection?: 'asc' | 'desc' | null;
+  page?: number;
+  size?: number;
+}
+
+export interface PaginaDocumentos {
+  content: Documento[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
+
+export interface DocumentosContadores {
+  total: number;
+  saida: number;
+  entrada: number;
+  rascunho: number;
+  enviado: number;
+  visualizado: number;
+  semana: number;
+}
+
+export interface DocumentoCompartilhado {
+  token: string;
+  path: string;
+  url: string;
+}
+
+export interface DocumentoPublico {
+  fileName: string;
+  documentType: string;
+  competence: string | null;
+  status: string;
+  fileFormat: string;
+}
+
+export interface UploadState {
+  active: boolean;
+  progress: number;
+  error: string | null;
+}
+
+export type ProgressoUpload = (percentual: number) => void;
 
 const statusOrdem: Record<string, number> = {
   CRIADO: 0,
@@ -60,7 +130,8 @@ const direcaoParaApi = (direcao: string): string =>
 const direcaoDoApi = (direcao: string): string =>
   direcao === 'RECEBIDO_DO_CLIENTE' ? DirecaoDocumento.ENTRADA : DirecaoDocumento.SAIDA;
 
-const dataHora = (valor: string): { data: string; hora: string } => {
+const dataHora = (valor: string | null | undefined): { data: string; hora: string } => {
+  if (!valor) return { data: '', hora: '' };
   const data = new Date(valor);
   if (Number.isNaN(data.getTime())) return { data: '', hora: '' };
   return {
@@ -79,7 +150,7 @@ const dataParaApi = (valor: string | null | undefined): string | undefined => {
 
 const toDocumento = (response: DocumentResponse): Documento => {
   const tipo = response.documentType;
-  const { data, hora } = dataHora(response.createdIn);
+  const { data, hora } = dataHora(response.createdIn ?? response.createdAt);
   const status = response.status;
 
   // O back-end não expõe eventos por transição; o histórico é derivado do status real
@@ -105,6 +176,7 @@ const toDocumento = (response: DocumentResponse): Documento => {
     hash: '',
     area: areaDoTipo(tipo),
     historico,
+    ativo: response.active ?? true,
   };
 };
 
@@ -117,6 +189,7 @@ const montarFormData = (dados: {
   vencimento: string | null | undefined;
   formato: string;
   direcao: string;
+  sendNow: boolean;
 }): FormData => {
   const form = new FormData();
   form.append('file', dados.file, dados.file.name);
@@ -128,7 +201,23 @@ const montarFormData = (dados: {
   form.append('sendChannel', canalParaApi(dados.canal));
   form.append('direction', direcaoParaApi(dados.direcao));
   form.append('fileFormat', dados.formato.toUpperCase());
+  form.append('sendNow', String(dados.sendNow));
   return form;
+};
+
+/** Link absoluto do documento compartilhado, para copiar ou enviar no WhatsApp. */
+export const urlPublicaDocumento = (path: string): string =>
+  typeof location === 'undefined' ? path : `${location.origin}${path}`;
+
+/** Abre o WhatsApp do cliente com o link do documento; não usa API externa. */
+export const urlWhatsappCliente = (
+  whatsapp: string | null | undefined,
+  texto: string
+): string | null => {
+  const digits = (whatsapp ?? '').replace(/\D/g, '');
+  if (!digits) return null;
+  const telefone = digits.startsWith('55') ? digits : `55${digits}`;
+  return `https://wa.me/${telefone}?text=${encodeURIComponent(texto)}`;
 };
 
 const salvarArquivo = (blob: Blob, nome: string): void => {
@@ -146,26 +235,116 @@ const salvarArquivo = (blob: Blob, nome: string): void => {
 @Injectable({ providedIn: 'root' })
 export class DocumentService {
   private readonly http = inject(HttpClient);
+  private readonly auditoria = inject(AuditoriaService);
+  private readonly cancelarUpload$ = new Subject<void>();
+  private readonly estadoUpload = new BehaviorSubject<UploadState>({
+    active: false,
+    progress: 0,
+    error: null,
+  });
 
-  private async listarTodos(): Promise<Documento[]> {
-    const response = await firstValueFrom(this.http.get<DocumentResponse[]>('/documents'));
-    return response.map(toDocumento);
+  /** Estado reativo do upload, usado pelos modais para barra, erro e cancelamento. */
+  readonly uploadState$ = this.estadoUpload.asObservable();
+
+  /** Cancela o upload em andamento; a Promise rejeita com "Envio cancelado". */
+  cancelUpload(): void {
+    if (this.estadoUpload.value.active) {
+      this.cancelarUpload$.next();
+    }
   }
 
-  async listByClient(clienteId: number | string): Promise<Documento[]> {
-    const documentos = await this.listarTodos();
-    return documentos.filter((doc) => doc.clienteId === Number(clienteId));
+  private async enviarComProgresso(
+    form: FormData,
+    onProgress?: ProgressoUpload
+  ): Promise<DocumentResponse> {
+    this.estadoUpload.next({ active: true, progress: 0, error: null });
+
+    const evento$ = this.http
+      .post<DocumentResponse>('/documents', form, { observe: 'events', reportProgress: true })
+      .pipe(
+        takeUntil(this.cancelarUpload$),
+        tap((event) => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            const percentual = Math.min(100, Math.round((100 * event.loaded) / event.total));
+            onProgress?.(percentual);
+            this.estadoUpload.next({ active: true, progress: percentual, error: null });
+          }
+        }),
+        filter((event): event is HttpResponse<DocumentResponse> => event.type === HttpEventType.Response)
+      );
+
+    try {
+      const response = await lastValueFrom(evento$);
+      this.estadoUpload.next({ active: false, progress: 100, error: null });
+      return response.body!;
+    } catch (erro) {
+      const mensagem = erro instanceof EmptyError
+        ? 'Envio cancelado pelo usuário.'
+        : this.mensagemDeErro(erro);
+      this.estadoUpload.next({ active: false, progress: 0, error: mensagem });
+      throw new Error(mensagem);
+    }
   }
 
-  async listAll(direcao?: string | null): Promise<Documento[]> {
-    const documentos = await this.listarTodos();
-    if (!direcao) return documentos;
-    return documentos.filter((doc) => doc.direcao === direcao);
+  private mensagemDeErro(erro: unknown): string {
+    if (erro instanceof HttpErrorResponse) {
+      const body = erro.error as { message?: string } | null;
+      return body?.message ?? `Falha no envio (${erro.status}). Tente novamente.`;
+    }
+    return 'Falha no envio. Tente novamente.';
+  }
+
+  /** Listagem paginada: filtros e ordenação executados no banco, nunca no navegador. */
+  async listPage(filtros: DocumentoFiltros = {}): Promise<PaginaDocumentos> {
+    let params = new HttpParams();
+    const aplicar = (chave: string, valor: string | number | null | undefined): HttpParams => {
+      if (valor === null || valor === undefined || valor === '') return params;
+      params = params.set(chave, String(valor));
+      return params;
+    };
+
+    aplicar('search', filtros.busca);
+    aplicar('customerId', filtros.clienteId);
+    aplicar('direction', filtros.direcao);
+    aplicar('status', filtros.status);
+    aplicar('documentType', filtros.tipo);
+    aplicar('competence', filtros.competencia);
+    aplicar('sendChannel', filtros.canal);
+    aplicar('from', filtros.de);
+    aplicar('to', filtros.ate);
+    aplicar('sortBy', filtros.sortBy);
+    aplicar('sortDirection', filtros.sortDirection);
+    aplicar('page', filtros.page ?? 0);
+    aplicar('size', filtros.size ?? 20);
+
+    const response = await firstValueFrom(
+      this.http.get<DocumentPageResponse>('/documents/page', { params })
+    );
+
+    return {
+      content: response.content.map(toDocumento),
+      totalElements: response.totalElements,
+      totalPages: response.totalPages,
+      number: response.number,
+      size: response.size,
+    };
+  }
+
+  /** Contadores dos cards e abas direto do banco, sem carregar os documentos. */
+  async contagens(): Promise<DocumentosContadores> {
+    return firstValueFrom(this.http.get<DocumentosContadores>('/documents/counts'));
   }
 
   async getById(id: number | string): Promise<Documento | null> {
-    const documentos = await this.listarTodos();
-    return documentos.find((doc) => doc.id === Number(id)) ?? null;
+    try {
+      const response = await firstValueFrom(
+        this.http.get<DocumentResponse>(`/documents/${id}`)
+      );
+      return toDocumento(response);
+    } catch (erro) {
+      if (erro instanceof HttpErrorResponse && erro.status === 404) return null;
+      throw erro;
+    }
   }
 
   /** O back-end não versiona arquivos: cada documento é uma versão independente. */
@@ -178,60 +357,57 @@ export class DocumentService {
     tipo: string,
     competencia: string
   ): Promise<Documento | undefined> {
-    const documentos = await this.listarTodos();
-    return documentos.find(
-      (doc) =>
-        doc.clienteId === Number(clienteId) &&
-        doc.direcao === DirecaoDocumento.SAIDA &&
-        doc.tipo === tipo &&
-        doc.competencia === competencia
-    );
+    const pagina = await this.listPage({
+      clienteId: Number(clienteId),
+      tipo,
+      competencia,
+      direcao: DirecaoDocumento.SAIDA,
+      size: 1,
+    });
+    return pagina.content[0];
   }
 
-  async create(dados: DocumentoNovo): Promise<Documento> {
+  async create(dados: DocumentoNovo, onProgress?: ProgressoUpload): Promise<Documento> {
     if (!dados.file) throw new Error('É necessário selecionar um arquivo.');
 
-    const response = await firstValueFrom(
-      this.http.post<DocumentResponse>(
-        '/documents',
-        montarFormData({
-          file: dados.file,
-          clienteId: dados.clienteId,
-          tipo: dados.nome ?? dados.tipo,
-          competencia: dados.competencia,
-          canal: dados.canal,
-          vencimento: dados.vencimento,
-          formato: dados.formato,
-          direcao: DirecaoDocumento.SAIDA,
-        })
-      )
+    // "Enviar agora" é uma única operação atômica no back-end: salva e registra o envio.
+    const response = await this.enviarComProgresso(
+      montarFormData({
+        file: dados.file,
+        clienteId: dados.clienteId,
+        tipo: dados.nome ?? dados.tipo,
+        competencia: dados.competencia,
+        canal: dados.canal,
+        vencimento: dados.vencimento,
+        formato: dados.formato,
+        direcao: DirecaoDocumento.SAIDA,
+        sendNow: dados.enviarAgora,
+      }),
+      onProgress
     );
-
-    if (dados.enviarAgora) {
-      await this.markEnviado(response.id);
-      return (await this.getById(response.id)) ?? toDocumento(response);
-    }
 
     return toDocumento(response);
   }
 
-  async createEntrada(dados: DocumentoEntrada): Promise<Documento> {
+  async createEntrada(
+    dados: DocumentoEntrada,
+    onProgress?: ProgressoUpload
+  ): Promise<Documento> {
     if (!dados.file) throw new Error('É necessário selecionar um arquivo.');
 
-    const response = await firstValueFrom(
-      this.http.post<DocumentResponse>(
-        '/documents',
-        montarFormData({
-          file: dados.file,
-          clienteId: dados.clienteId,
-          tipo: dados.tipo,
-          competencia: dados.competencia,
-          canal: dados.canal,
-          vencimento: dados.vencimento,
-          formato: dados.formato,
-          direcao: DirecaoDocumento.ENTRADA,
-        })
-      )
+    const response = await this.enviarComProgresso(
+      montarFormData({
+        file: dados.file,
+        clienteId: dados.clienteId,
+        tipo: dados.tipo,
+        competencia: dados.competencia,
+        canal: dados.canal,
+        vencimento: dados.vencimento,
+        formato: dados.formato,
+        direcao: DirecaoDocumento.ENTRADA,
+        sendNow: false,
+      }),
+      onProgress
     );
 
     return toDocumento(response);
@@ -267,6 +443,41 @@ export class DocumentService {
   async markEnviado(id: number | string): Promise<Documento | null> {
     await firstValueFrom(this.http.post<DocumentResponse>(`/documents/${id}/send`, {}));
     return this.getById(id);
+  }
+
+  /** RF27.1: inativação lógica e irreversível; mantém arquivo e histórico. */
+  async inativar(id: number | string): Promise<Documento | null> {
+    await firstValueFrom(this.http.post<DocumentResponse>(`/documents/${id}/inactivate`, {}));
+    return this.getById(id);
+  }
+
+  historico(id: number | string): Promise<EventoAuditoria[]> {
+    return this.auditoria.documento(id);
+  }
+
+  /** Gera o link público e registra o envio. O contador envia o link pelo próprio WhatsApp. */
+  async compartilhar(id: number | string): Promise<DocumentoCompartilhado> {
+    const response = await firstValueFrom(
+      this.http.post<{ token: string; path: string }>(`/documents/${id}/share`, {})
+    );
+    return { ...response, url: urlPublicaDocumento(response.path) };
+  }
+
+  /** Metadados da página pública; não altera o status do documento. */
+  async documentoPublico(token: string): Promise<DocumentoPublico> {
+    return firstValueFrom(this.http.get<DocumentoPublico>(`/public/documents/${token}`));
+  }
+
+  /** Abrir o arquivo público registra a transição VISUALIZADO no back-end. */
+  async arquivoPublico(token: string): Promise<Blob> {
+    return firstValueFrom(
+      this.http.get(`/public/documents/${token}/file`, { responseType: 'blob' })
+    );
+  }
+
+  /** Exclui o documento. O prazo gerado a partir dele também é removido pelo back-end. */
+  async remove(id: number | string): Promise<void> {
+    await firstValueFrom(this.http.delete<void>(`/documents/${id}`));
   }
 
   /** A transição VISUALIZADO é registrada pelo back-end ao servir o arquivo. */

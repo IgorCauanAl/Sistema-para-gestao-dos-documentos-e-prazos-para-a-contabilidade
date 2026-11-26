@@ -22,8 +22,8 @@
           (change)="patch({ tipo: $any($event.target).value })"
         >
           <option value="">Todos</option>
-          @for (area of areas; track area) {
-            <option [value]="area">{{ area }}</option>
+          @for (tipo of tipos; track tipo) {
+            <option [value]="tipo">{{ tipo }}</option>
           }
         </select>
       </div>

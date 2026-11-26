@@ -3,12 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { dataBRParaISO, formatarData, formatarHora, paraBR, paraData } from '../domain/data';
-import type {
-  Solicitacao,
-  SolicitacaoItem,
-  SolicitacaoNova,
-  SolicitacaoTentativa,
-} from '../domain/models';
+import type { EventoAuditoria, Solicitacao, SolicitacaoItem, SolicitacaoNova, SolicitacaoTentativa } from '../domain/models';
+import { AuditoriaService } from './auditoria.service';
+import { ClientService } from './client.service';
 
 // Constantes locais para evitar ciclo de inicialização de módulos no runner de testes.
 const STATUS_SOLICITACAO = {
@@ -40,6 +37,8 @@ interface RequestListItemDTO {
   acceptedItems: number;
   totalItems: number;
   progress?: number | string;
+  /** RF31.1: o back-end é a fonte autoritativa da validade do link. */
+  publicTokenExpiresAt?: string | null;
 }
 
 interface RequestResponseDTO extends RequestListItemDTO {
@@ -67,11 +66,24 @@ const statusItem = (status: string): string => {
   }
 };
 
-const statusSolicitacao = (status: string, deadline: string | null | undefined): string => {
+const statusSolicitacao = (
+  status: string,
+  deadline: string | null | undefined,
+  expiresAt?: string | null
+): string => {
   if (status === STATUS_SOLICITACAO.CANCELADA || status === STATUS_SOLICITACAO.CONCLUIDA) {
     return status;
   }
 
+  if (expiresAt) {
+    const expira = new Date(expiresAt);
+    if (!Number.isNaN(expira.getTime()) && expira.getTime() <= Date.now()) {
+      return STATUS_SOLICITACAO.EXPIRADA;
+    }
+    return STATUS_SOLICITACAO.ABERTA;
+  }
+
+  // Registros legados sem validade persistida: mantém a regra antiga pelo prazo.
   const alvo = paraData(paraBR(deadline));
   if (alvo) {
     const hoje = new Date();
@@ -166,6 +178,8 @@ const toSolicitacao = (
 ): Solicitacao => {
   const prazo = paraBR(dto.dueDate ?? opcoes.deadline ?? null);
   const criadoEm = dataHora(opcoes.criadoEm);
+  const expiraEm = dto.publicTokenExpiresAt ?? null;
+  const validade = expiraEm ? dataHora(expiraEm) : null;
 
   return {
     id: dto.id,
@@ -176,24 +190,25 @@ const toSolicitacao = (
     instrucoes: '',
     canal: 'Link público',
     token: opcoes.token ?? '',
-    validadeAte: prazo,
+    validadeAte: validade ? `${validade.data} ${validade.hora}` : prazo,
     validadeDias: 0,
-    status: statusSolicitacao(dto.status, dto.dueDate ?? opcoes.deadline),
+    status: statusSolicitacao(dto.status, dto.dueDate ?? opcoes.deadline, expiraEm),
     criadoEm,
     itens: opcoes.itens ?? [],
     aceitos: dto.acceptedItems ?? 0,
     totalItens: dto.totalItems ?? 0,
+    expiraEm,
   };
 };
 
 @Injectable({ providedIn: 'root' })
 export class SolicitacaoService {
   private readonly http = inject(HttpClient);
+  private readonly clientService = inject(ClientService);
+  private readonly auditoria = inject(AuditoriaService);
 
   async list(): Promise<Solicitacao[]> {
-    const clientes = await firstValueFrom(
-      this.http.get<Array<{ id: number }>>('/customers')
-    );
+    const clientes = await this.clientService.list();
 
     const porCliente = await Promise.all(
       clientes.map((cliente) =>
@@ -285,5 +300,34 @@ export class SolicitacaoService {
       this.http.post(`/requests/${solicitacaoId}/items/${itemId}/upload`, form)
     );
     return this.getById(solicitacaoId);
+  }
+
+  /**
+   * RF31.1: renova o MESMO link público. `expiresAt` é ISO local (yyyy-MM-ddTHH:mm),
+   * aceito diretamente pelo LocalDateTime do back-end.
+   */
+  async renovarLink(
+    solicitacaoId: number | string,
+    expiresAt: string
+  ): Promise<Solicitacao | null> {
+    await firstValueFrom(
+      this.http.patch(`/requests/${solicitacaoId}/public-link/expiration`, { expiresAt })
+    );
+    return this.getById(solicitacaoId);
+  }
+
+  /** RF34.1: reabre solicitação concluída devolvendo um item ao fluxo. */
+  async reabrir(
+    solicitacaoId: number | string,
+    dados: { itemId: number | string; itemStatus: 'PENDENTE' | 'RECUSADO'; reason?: string }
+  ): Promise<Solicitacao | null> {
+    await firstValueFrom(
+      this.http.post(`/requests/${solicitacaoId}/reopen`, dados)
+    );
+    return this.getById(solicitacaoId);
+  }
+
+  historico(solicitacaoId: number | string): Promise<EventoAuditoria[]> {
+    return this.auditoria.solicitacao(solicitacaoId);
   }
 }

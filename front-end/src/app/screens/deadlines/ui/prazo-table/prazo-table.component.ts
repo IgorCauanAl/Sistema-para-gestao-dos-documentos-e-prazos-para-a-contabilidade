@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { LucideCheckCircle2, LucideEye } from '@lucide/angular';
+import { LucideCheckCircle2, LucideEye, LucideTrash2 } from '@lucide/angular';
 
 import { TableComponent } from '../../../../core/components/ui/table/table.component';
 import type { Prazo } from '../../../../core/domain/models';
@@ -25,6 +25,7 @@ import { PrioridadeBadgeComponent } from '../prioridade-badge/prioridade-badge.c
     AtrasoBadgeComponent,
     LucideCheckCircle2,
     LucideEye,
+    LucideTrash2,
   ],
   templateUrl: './prazo-table.component.html',
   styleUrl: './prazo-table.component.css',
@@ -35,6 +36,7 @@ export class PrazoTableComponent {
   @Input() hoje = new Date();
   @Output() onView = new EventEmitter<Prazo>();
   @Output() onEntregar = new EventEmitter<Prazo>();
+  @Output() onExcluir = new EventEmitter<Prazo>();
 
   readonly StatusPrazo = StatusPrazo;
 

@@ -23,7 +23,7 @@
             type="text"
             placeholder="Buscar por Razão Social ou CNPJ..."
             [value]="searchTerm"
-            (input)="searchTerm = $any($event.target).value"
+            (input)="onSearch($event)"
             class="w-full pl-12 pr-4 py-3 bg-transparent border-none focus:outline-none text-slate-700 placeholder:text-slate-400"
           />
         </div>
@@ -39,13 +39,12 @@
               <th class="p-4 font-semibold">CNPJ</th>
               <th class="p-4 font-semibold">Responsável</th>
               <th class="p-4 font-semibold">E-mail</th>
-              <th class="p-4 font-semibold">Pendências</th>
               <th class="p-4 font-semibold">Último envio</th>
               <th class="p-4 pr-6 font-semibold text-center">Ações</th>
             </tr>
           </thead>
           <tbody>
-            @for (client of filteredClients; track client.id) {
+            @for (client of clients; track client.id) {
               <tr
                 (click)="handleOpen(client)"
                 class="border-b border-slate-100 last:border-0 hover:bg-slate-50/80 transition-colors cursor-pointer"
@@ -61,22 +60,6 @@
                 <td class="p-4 text-sm text-slate-600">{{ formatCnpj(client.cnpj) }}</td>
                 <td class="p-4 text-sm text-slate-600">{{ client.responsavel }}</td>
                 <td class="p-4 text-sm text-slate-600">{{ client.email }}</td>
-                <td class="p-4">
-                  <span
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
-                    [class]="
-                      (client.pendencias ?? 0) > 0
-                        ? 'bg-orange-50 text-orange-700 border-orange-200'
-                        : 'bg-green-50 text-green-700 border-green-200'
-                    "
-                  >
-                    {{
-                      (client.pendencias ?? 0) > 0
-                        ? (client.pendencias ?? 0) + ' pendente' + ((client.pendencias ?? 0) > 1 ? 's' : '')
-                        : 'Sem pendências'
-                    }}
-                  </span>
-                </td>
                 <td class="p-4 text-sm text-slate-600">{{ client.ultimoEnvio ?? '—' }}</td>
                 <td class="p-4 pr-6">
                   <div class="flex justify-center gap-2">
@@ -111,20 +94,53 @@
                 </td>
               </tr>
             }
-            @if (filteredClients.length === 0) {
+            @if (clients.length === 0) {
               <tr>
-                <td colspan="7" class="p-12 text-center text-slate-500">Nenhum cliente encontrado.</td>
+                <td colspan="6" class="p-12 text-center text-slate-500">Nenhum cliente encontrado.</td>
               </tr>
             }
           </tbody>
         </table>
       </app-table>
 
+      <div class="flex flex-wrap items-center justify-between gap-3 px-2 pb-2 text-sm text-slate-500">
+        <span>
+          @if (totalElements > 0) {
+            Mostrando {{ intervaloInicio }}–{{ intervaloFim }} de {{ totalElements }} clientes
+          } @else {
+            Nenhum cliente encontrado
+          }
+        </span>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            [disabled]="page === 0"
+            (click)="goToPage(page - 1)"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Página anterior"
+          >
+            Anterior
+          </button>
+          <span>Página {{ paginaAtual }} de {{ totalPages || 1 }}</span>
+          <button
+            type="button"
+            [disabled]="page + 1 >= totalPages"
+            (click)="goToPage(page + 1)"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Próxima página"
+          >
+            Próxima
+          </button>
+        </div>
+      </div>
+
       <app-client-form-modal
         [open]="isModalOpen"
         [title]="editingId ? 'Editar Cliente' : 'Cadastrar Novo Cliente'"
         [formData]="formData"
         [saving]="saving"
+        [fieldErrors]="fieldErrors"
+        (fieldErrorsChange)="fieldErrors = $event"
         (formDataChange)="formData = $event"
         (onClose)="closeModal()"
         (onSubmit)="handleSubmit()"
@@ -132,13 +148,15 @@
 
       <app-confirm-dialog
         [open]="clienteParaExcluir !== null"
-        title="Excluir cliente"
+        title="Excluir cliente e todos os dados vinculados"
         [message]="
-          'Tem certeza que deseja excluir ' +
+          'Atenção: excluir ' +
           (clienteParaExcluir?.razaoSocial ?? 'este cliente') +
-          '? Esta ação não pode ser desfeita.'
+          ' apagará permanentemente todos os documentos, prazos, solicitações e históricos vinculados a ele. ' +
+          'Esta ação não pode ser desfeita. Deseja continuar?'
         "
-        confirmLabel="Excluir"
+        confirmLabel="Excluir tudo"
+        [loading]="deleting"
         [danger]="true"
         (onClose)="cancelarExclusao()"
         (onConfirm)="confirmarExclusao()"

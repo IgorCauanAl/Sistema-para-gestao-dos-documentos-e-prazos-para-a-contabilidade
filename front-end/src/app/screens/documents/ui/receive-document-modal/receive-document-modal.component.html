@@ -142,6 +142,23 @@
             ></textarea>
           </div>
 
+          @if (saving) {
+            <div class="space-y-2" role="status" aria-live="polite">
+              <div class="flex items-center justify-between text-xs font-medium text-slate-600">
+                <span>{{ progress }}% enviado</span>
+                <span>Aguarde...</span>
+              </div>
+              <app-progress-bar [pct]="progress" tone="indigo"></app-progress-bar>
+            </div>
+          }
+
+          @if (uploadErro) {
+            <div class="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl" role="alert">
+              <svg lucideFileText [size]="18" class="text-red-600 shrink-0 mt-0.5"></svg>
+              <p class="text-sm font-medium text-red-700">{{ uploadErro }}</p>
+            </div>
+          }
+
           @if (error) {
             <div class="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-2xl" role="alert">
               <svg lucideFileText [size]="18" class="text-red-600 shrink-0 mt-0.5"></svg>
@@ -154,7 +171,8 @@
           <button
             type="button"
             (click)="onClose.emit()"
-            class="px-5 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors text-sm font-medium"
+            [disabled]="saving"
+            class="px-5 py-2.5 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors text-sm font-medium disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -165,6 +183,15 @@
           >
             Registrar recebimento
           </button>
+          @if (saving) {
+            <button
+              type="button"
+              (click)="cancelarUpload()"
+              class="px-5 py-2.5 rounded-full border border-red-200 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
+            >
+              Cancelar envio
+            </button>
+          }
         </div>
       </app-modal>
     }
